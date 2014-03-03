@@ -10,24 +10,14 @@
         <script src="components/jquery/dist/jquery.min.js"></script>
         <script src="components/angular/angular.min.js"></script>
         <script src="components/angular-route/angular-route.min.js"></script>
-        <script src="cordova.js"></script>
         <script src="js/app.js"></script>
+        <script src="cordova.js"></script>
         <script>
           $(app.initialize.bind(app));
         </script>
         <title>Garage Door Opener</title>
     </head>
-    <body ng-app>
-      <div class="container">
-        <h1>Opener</h1>
-        <form role="form" action="#">
-          <div class="camera">
-           <img src="http://192.168.1.108/camera" border="0">
-          </div>
-          <div class="controls">
-            <button class="btn btn-primary btn-lg" type="button" onclick="toggle(); return false">Activate</button>
-          </div>
-        </form>
-      </div>
+    <body ng-app="GarageDoorApp">
+      <div class="container" ng-view></div>
     </body>
 </html>

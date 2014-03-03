@@ -1,0 +1,16 @@
+<div ng-controller="SettingsController">
+  <form ng-submit="update()" role="form" class="form-horizontal">
+    <h1>Settings</h1>
+    <div class="form-group">
+      <label class="col-xs-2 control-label">Host</label>
+      <div class="col-xs-10">
+        <input type="text" class="input-lg form-control" ng-model="Config.host" />
+      </div>
+    </div>
+    <div class="form-group pull-right">
+      <div class="col-xs-12">
+        <button type="submit" class="btn btn-primary">Update</button>
+      </div>
+    </div>
+  </form>
+</div>

@@ -10,22 +10,43 @@ body {
   color: #eee;
 }
 
-form .camera {
+html, body, body>.container, body>.container>[ng-controller] {
+  height: 100%;
+}
+
+.container {
+  padding: 5px;
+}
+
+form {
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.camera {
   border-radius: 10px;
   border-bottom-left-radius: 0px;
   border-bottom-right-radius: 0px;
   background: #ddd;
 }
 
-form .camera img {
+.camera img {
+  border-radius: 10px;
+  border-bottom-left-radius: 0px;
+  border-bottom-right-radius: 0px;
   width: 100%;
+  height: 100%;
   border: none;
   outline: none;
 }
 
-form .controls button {
+.controls {
+  border-top: 5px solid #ccc;
+}
+
+.controls button {
   width: 100%;
-  height: 5em;
+  height: 8em;
   border-radius: 10px;
   border-top-right-radius: 0px;
   border-top-left-radius: 0px;

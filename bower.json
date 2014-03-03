@@ -1,0 +1,29 @@
+{
+  "name": "GarageDoorApp",
+  "version": "1.0.0",
+  "authors": [
+    "Timothy Soehnlin <timothy.soehnlin@gmail.com>"
+  ],
+  "description": "Interfaces with a simple http server for managing the garage door",
+  "main": "src/index.html",
+  "keywords": [
+    "garage",
+    "rpi"
+  ],
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "bootstrap": "~3.1.0",
+    "angular": "1.2.13",
+    "angular-route": "1.2.13",
+    "angular-animate": "1.2.13",
+    "less": "~1.6.1"
+  }
+}
