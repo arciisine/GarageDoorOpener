@@ -1,0 +1,18 @@
+{
+  "name": "garage-door-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/express": "^4.0.35",
+    "@types/node": "^7.0.27",
+    "@types/rpio": "0.0.1",
+    "express": "^4.15.3",
+    "rpio": "^0.9.16"
+  }
+}

@@ -8,7 +8,7 @@ import * as platformModule from "tns-core-modules/platform";
     <ActionBar class="main" title="Garage Door Opener"></ActionBar>
     <FlexboxLayout flexDirection="column">
       <WebView  flexGrow="1" src="~/resources/image.html"></WebView>     
-      <Button class="action" text="Activate" (click)="open()"></Button>
+      <Button class="action" text="Activate" (click)="activate()"></Button>
     </FlexboxLayout>
   `,
   styles: [`
@@ -26,12 +26,7 @@ import * as platformModule from "tns-core-modules/platform";
 })
 export class AppComponent {
 
-  open() {
+  activate() {
 
   }
-
-  close() {
-
-  }
-
 }
