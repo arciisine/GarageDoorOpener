@@ -1,0 +1,16 @@
+[Unit]
+Description=Garage Door Opener
+
+[Service]
+ExecStart=/usr/bin/npm run server
+WorkingDirectory=/home/pi/server
+Restart=always
+RestartSec=10
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=garage-door-opener
+User=root
+#Group=<alternate group>
+
+[Install]
+WantedBy=multi-user.target
