@@ -3,10 +3,10 @@
 	"readme": "NativeScript Application",
 	"nativescript": {
 		"id": "org.arcsine.GarageDoor",
-		"tns-android": {
+		"tns-ios": {
 			"version": "3.0.1"
 		},
-		"tns-ios": {
+		"tns-android": {
 			"version": "3.0.1"
 		}
 	},

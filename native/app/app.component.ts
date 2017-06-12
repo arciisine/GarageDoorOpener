@@ -1,21 +1,21 @@
 import { Component } from "@angular/core";
+import { Http } from '@angular/http';
 import * as platformModule from "tns-core-modules/platform";
 
 
 @Component({
   selector: "my-app",
   template: `
-    <ActionBar class="main" title="Garage Door Opener"></ActionBar>
     <FlexboxLayout flexDirection="column">
       <WebView  flexGrow="1" src="~/resources/image.html"></WebView>     
-      <Button class="action" text="Activate" (click)="activate()"></Button>
+      <Button class="action" text="Activate" (tap)="activate()"></Button>
     </FlexboxLayout>
   `,
   styles: [`
 
     .main {
       color: darkgreen;
-      background-color: #ccc;  
+      background-color: #ddd;  
     }
 
     .action {
@@ -26,7 +26,11 @@ import * as platformModule from "tns-core-modules/platform";
 })
 export class AppComponent {
 
-  activate() {
+  constructor(private http: Http) {
 
+  }
+
+  activate() {
+    this.http.post('http://raspberrypi.local/activate', {}).subscribe();
   }
 }
