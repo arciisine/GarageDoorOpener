@@ -29,3 +29,5 @@ app.get('/camera/snapshot', async (req, res, next) => {
 });
 
 https.createServer(credentials, app).listen(443);
+
+app.listen(80);

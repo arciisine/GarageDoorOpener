@@ -11,9 +11,9 @@ export class Pi {
   static listening = 0;
   static cameraProc: proc.ChildProcess = undefined;
   static cameraOptions = {
-    x: 1280,
-    y: 720,
-    fps: 24
+    x: 640,
+    y: 480,
+    fps: 15
   }
 
   static init() {
