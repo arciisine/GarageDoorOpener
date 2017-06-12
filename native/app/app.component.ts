@@ -1,6 +1,6 @@
 import { Component } from "@angular/core";
-import { Http } from '@angular/http';
 import * as platformModule from "tns-core-modules/platform";
+import * as http from 'http';
 
 
 @Component({
@@ -26,11 +26,11 @@ import * as platformModule from "tns-core-modules/platform";
 })
 export class AppComponent {
 
-  constructor(private http: Http) {
+  constructor() {
 
   }
 
   activate() {
-    this.http.post('http://raspberrypi.local/activate', {}).subscribe();
+    http.request({ url: 'http://192.168.2.119/activate', method: 'POST' });
   }
 }
