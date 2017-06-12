@@ -1,13 +1,20 @@
 # Garage Door Opener
 
-## Setup
+## Requirements
 * Raspberry PI
 * Camera Module
-* mjpeg support
+* mjpeg stream support
 
 
-## Native App
+## Components
+
+### Native App
 Nativescript to build out UI
 
-## Node Rest Server
+### Node Rest Server
 Express app to serve up application
+
+### Mjpeg Compiled
+Compiled and install mjpeg streamer
+
+## Steps to Deploy
