@@ -3,7 +3,7 @@ import * as http from 'http';
 import * as express from 'express';
 import * as proc from 'child_process';
 
-export class Pi {
+export class Garage {
 
   static DOOR = 18
 
@@ -19,9 +19,9 @@ export class Pi {
   static init() {
     rpio.open(this.DOOR, rpio.OUTPUT);
 
-    process.on('exit', () => Pi.cleanup());
-    process.on('SIGINT', () => Pi.cleanup());
-    process.on('uncaughtException', () => Pi.cleanup());
+    process.on('exit', () => Garage.cleanup());
+    process.on('SIGINT', () => Garage.cleanup());
+    process.on('uncaughtException', () => Garage.cleanup());
   }
 
   static async triggerDoor() {
@@ -42,9 +42,10 @@ export class Pi {
   }
 
   static async startCamera() {
+    console.log("Starting Camera", this.listening);
     clearTimeout(this.killTimeout);
     if (!this.cameraProc) {
-      let args = ['-o', 'output_http.so -w ./www', '-i', 'input_raspicam.so ' + Object.keys(Pi.cameraOptions).map(x => `-${x} ${Pi.cameraOptions[x]}`).join(' ')];
+      let args = ['-o', 'output_http.so -w ./www', '-i', 'input_raspicam.so ' + Object.keys(Garage.cameraOptions).map(x => `-${x} ${Garage.cameraOptions[x]}`).join(' ')];
       let env = {
         LD_LIBRARY_PATH: process.cwd(),
         ...process.env
@@ -61,6 +62,7 @@ export class Pi {
   }
 
   static async stopCamera() {
+    console.log("Stopping Camera", this.listening);
     if (this.listening === 0 && this.cameraProc) {
       try {
         this.cameraProc.kill('SIGINT');
@@ -72,6 +74,17 @@ export class Pi {
   }
 
   static async camera(request: express.Request, response: express.Response, stream: boolean = true) {
+    let closed = false, close = (type, key) => {
+      console.log("Closing", type, key);
+      if (closed) {
+        return;
+      }
+      this.listening--;
+      closed = true;
+      console.log("Camera Request End", this.listening);
+      this.killTimeout = setTimeout(() => this.stopCamera(), 1000 * 30);
+    };
+
     let req = http.request({
       port: 8080,
       host: 'localhost',
@@ -82,18 +95,13 @@ export class Pi {
     });
 
     this.listening++;
+    console.log("Camera Request Start", this.listening);
     this.startCamera();
-    let closed = false, close = () => {
-      if (closed) {
-        return;
-      }
-      this.listening--;
-      closed = true;
-      this.killTimeout = setTimeout(() => this.stopCamera(), 1000 * 60 * 5);
-    }
-    req.on('close', close);
-    req.on('error', close);
-    req.on('finish', close);
+
+    response.on('close', x => close('close', x));
+    req.on('error', x => close('error', x));
+    response.on('error', x => close('error', x));
+    response.on('finish', x => close('finish', x));
 
     req.end();
   }
