@@ -41,6 +41,7 @@ export class AppComponent implements OnInit, OnDestroy {
   ngOnInit() {
     app.on(app.suspendEvent, this.stopCamera);
     app.on(app.resumeEvent, this.startCamera);
+    this.startCamera();
   }
 
   ngOnDestroy() {

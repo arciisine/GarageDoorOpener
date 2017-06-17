@@ -73,7 +73,7 @@ export class Garage {
     }
   }
 
-  static async camera(request: express.Request, response: express.Response, stream: boolean = true) {
+  static async camera(request: express.Request, response: express.Response, action: 'stream' | 'snapshot' = 'stream') {
     let closed = false, close = (type, key) => {
       console.log("Closing", type, key);
       if (closed) {
@@ -85,18 +85,18 @@ export class Garage {
       this.killTimeout = setTimeout(() => this.stopCamera(), 1000 * 30);
     };
 
+    this.listening++;
+    console.log("Camera Request Start", this.listening);
+    await this.startCamera();
+
     let req = http.request({
       port: 8080,
       host: 'localhost',
-      path: `/?action=${stream ? 'stream' : 'snapshot'}`
+      path: `/?action=${action}`
     }, (res) => {
       response.writeHead(res.statusCode, res.headers);
       return res.pipe(response, { end: true });
     });
-
-    this.listening++;
-    console.log("Camera Request Start", this.listening);
-    this.startCamera();
 
     response.on('close', x => close('close', x));
     req.on('error', x => close('error', x));
