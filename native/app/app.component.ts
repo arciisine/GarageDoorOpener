@@ -32,7 +32,6 @@ export class AppComponent implements OnInit, OnDestroy {
 
   private url = '~/resources/image.html';
 
-
   constructor() {
     this.startCamera = this.startCamera.bind(this);
     this.stopCamera = this.stopCamera.bind(this);
@@ -42,26 +41,31 @@ export class AppComponent implements OnInit, OnDestroy {
     app.on(app.suspendEvent, this.stopCamera);
     app.on(app.resumeEvent, this.startCamera);
     this.startCamera();
+    setTimeout(this.startCamera, 5000);
   }
 
   ngOnDestroy() {
-    app.on(app.suspendEvent, this.stopCamera);
-    app.on(app.resumeEvent, this.startCamera);
+    app.off(app.suspendEvent, this.stopCamera);
+    app.off(app.resumeEvent, this.startCamera);
   }
 
   startCamera() {
     if (this._webView) {
-      this.webView.src = this.url;
+      if (this.webViewElement.src !== this.url) {
+        this.webViewElement.src = this.url;
+      } else {
+        this.webViewElement.reload();
+      }
     }
   }
 
   stopCamera() {
     if (this._webView) {
-      this.webView.src = '';
+      this.webViewElement.src = '';
     }
   }
 
-  get webView() {
+  get webViewElement() {
     return this._webView.nativeElement as WebView;
   }
 
