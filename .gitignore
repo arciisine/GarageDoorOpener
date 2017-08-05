@@ -3,3 +3,4 @@ native/platforms/
 node_modules/
 native/hooks/
 cert/**
+native/app/**/*.js
