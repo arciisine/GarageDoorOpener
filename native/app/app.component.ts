@@ -4,9 +4,8 @@ import * as platformModule from "tns-core-modules/platform";
 import * as http from 'http';
 import * as app from "application";
 
-
 @Component({
-  selector: "my-app",
+  selector: "ns-app",
   template: `
     <FlexboxLayout flexDirection="column">
       <WebView #image flexGrow="1"></WebView>     
@@ -33,6 +32,9 @@ export class AppComponent implements OnInit, OnDestroy {
   private url = '~/resources/image.html';
 
   constructor() {
+
+    console.log("HI");
+
     this.startCamera = this.startCamera.bind(this);
     this.stopCamera = this.stopCamera.bind(this);
   }
