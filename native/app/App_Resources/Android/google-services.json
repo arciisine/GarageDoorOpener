@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "955528203315",
+    "firebase_url": "https://garagedoorapp-1d1fe.firebaseio.com",
+    "project_id": "garagedoorapp-1d1fe",
+    "storage_bucket": "garagedoorapp-1d1fe.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:955528203315:android:31762c1d8729e339",
+        "android_client_info": {
+          "package_name": "org.arcsine.GarageDoor"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "955528203315-dg7g8bgt1k0aqqirvc3n3s53d52npg0f.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB5dc_NWoumgscZIYEkw_WQIFCbXZq0pzY"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

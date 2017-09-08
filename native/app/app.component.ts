@@ -1,8 +1,10 @@
 import { Component, ViewChild, ElementRef, OnDestroy, OnInit } from "@angular/core";
 import { WebView, LoadEventData } from "ui/web-view";
 import * as platformModule from "tns-core-modules/platform";
+import * as connectivity from "tns-core-modules/connectivity";
 import * as http from 'http';
 import * as app from "application";
+import firebase = require("nativescript-plugin-firebase");
 
 @Component({
   selector: "ns-app",
@@ -30,20 +32,28 @@ export class AppComponent implements OnInit, OnDestroy {
   @ViewChild("image") _webView: ElementRef;
 
   private url = '~/resources/image.html';
+  private firebase: typeof firebase;
 
   constructor() {
-
-    console.log("HI");
 
     this.startCamera = this.startCamera.bind(this);
     this.stopCamera = this.stopCamera.bind(this);
   }
 
-  ngOnInit() {
+  async ngOnInit() {
     app.on(app.suspendEvent, this.stopCamera);
     app.on(app.resumeEvent, this.startCamera);
     this.startCamera();
     setTimeout(this.startCamera, 5000);
+
+    this.firebase = await firebase.init();
+    let user = await firebase.login({
+      type: firebase.LoginType.GOOGLE,
+      googleOptions: {
+        hostedDomain: "garagedoor.arcsine.org"
+      }
+    });
+
   }
 
   ngOnDestroy() {
@@ -71,7 +81,11 @@ export class AppComponent implements OnInit, OnDestroy {
     return this._webView.nativeElement as WebView;
   }
 
-  activate() {
-    http.request({ url: 'http://192.168.2.119/activate', method: 'POST' });
+  async activate() {
+    if (connectivity.getConnectionType() === connectivity.connectionType.wifi) {
+      http.request({ url: 'http://192.168.2.119/activate', method: 'POST' });
+    } else {
+      await this.firebase.push('/Action', 'Activate')
+    }
   }
 }

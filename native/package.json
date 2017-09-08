@@ -22,6 +22,7 @@
 		"babylon": "^6.17.4",
 		"nativescript-angular": "~3.1.0",
 		"nativescript-angular-snapshot": "3.0.0-5.5.372.32",
+		"nativescript-plugin-firebase": "^4.0.6",
 		"nativescript-theme-core": "~1.0.4",
 		"reflect-metadata": "~0.1.8",
 		"rxjs": "~5.4.2",
