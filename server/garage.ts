@@ -1,8 +1,7 @@
 import * as http from 'http';
 import * as express from 'express';
 import * as proc from 'child_process';
-
-let rpio: any = null;
+import * as rpio from 'rpio';
 
 export class Garage {
 
@@ -18,9 +17,7 @@ export class Garage {
   }
 
   static init() {
-    //rpio = require('rpio');
-    //    rpio.open(this.DOOR, rpio.OUTPUT);
-
+    rpio.open(this.DOOR, rpio.OUTPUT);
     process.on('exit', () => Garage.cleanup());
     process.on('SIGINT', () => Garage.cleanup());
     process.on('uncaughtException', () => Garage.cleanup());

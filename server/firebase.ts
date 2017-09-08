@@ -1,14 +1,7 @@
 import * as firebase from 'firebase';
 import { Garage } from './garage';
 
-const app = firebase.initializeApp({
-  apiKey: "AIzaSyD0Au3CmDkW0xJEMx48RwrT9LQx_JxEi-A",
-  authDomain: "garagedoorapp-1d1fe.firebaseapp.com",
-  databaseURL: "https://garagedoorapp-1d1fe.firebaseio.com",
-  projectId: "garagedoorapp-1d1fe",
-  storageBucket: "",
-  messagingSenderId: "955528203315"
-});
+const app = firebase.initializeApp(require('../firebase-config'));
 
 export async function listen() {
   await app.auth().signInAnonymously();
