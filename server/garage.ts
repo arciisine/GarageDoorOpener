@@ -1,7 +1,8 @@
-import * as rpio from 'rpio';
 import * as http from 'http';
 import * as express from 'express';
 import * as proc from 'child_process';
+
+let rpio: any = null;
 
 export class Garage {
 
@@ -17,6 +18,7 @@ export class Garage {
   }
 
   static init() {
+    //rpio = require('rpio');
     //    rpio.open(this.DOOR, rpio.OUTPUT);
 
     process.on('exit', () => Garage.cleanup());
