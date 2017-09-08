@@ -4,6 +4,15 @@ import * as express from 'express';
 import { Garage } from './garage';
 import { listen } from './firebase';
 
+
+let privateKey = fs.readFileSync('../cert/key.pem', 'utf-8')
+let certificate = fs.readFileSync('../cert/cert.pem', 'utf-8')
+
+let credentials = {
+  key: privateKey,
+  cert: certificate
+};
+
 Garage.init();
 
 const app = express();
@@ -21,6 +30,10 @@ app.get('/camera/snapshot', async (req, res, next) => {
   await Garage.camera(req, res, 'snapshot');
 });
 
-app.listen(8080);
 //Listen for firebase
 listen();
+
+https.createServer(credentials, app)
+  .listen(443)
+  .listen(80);
+
