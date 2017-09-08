@@ -30,7 +30,14 @@ export async function listen() {
       ref.child(item.key).remove();
     }
 
-    //Run listeners
-    console.log("RECEIVED:", act, query, item.val());
+    if (item.key === 'Action') {
+      switch (item.val()) {
+        case 'Activate':
+        case 'Open':
+        case 'Close':
+          Garage.triggerDoor(item.val());
+          break;
+      }
+    }
   });
 }

@@ -26,7 +26,7 @@ export class Garage {
     process.on('uncaughtException', () => Garage.cleanup());
   }
 
-  static async triggerDoor() {
+  static async triggerDoor(action?: string) {
     rpio.write(this.DOOR, rpio.HIGH);
     rpio.sleep(.5)
     rpio.write(this.DOOR, rpio.LOW);
