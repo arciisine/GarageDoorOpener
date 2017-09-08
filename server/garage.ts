@@ -7,9 +7,9 @@ export class Garage {
 
   static DOOR = 18
 
-  static killTimeout;
+  static killTimeout: NodeJS.Timer;
   static listening = 0;
-  static cameraProc: proc.ChildProcess = undefined;
+  static cameraProc?: proc.ChildProcess = undefined;
   static cameraOptions = {
     x: 640,
     y: 480,
@@ -17,7 +17,7 @@ export class Garage {
   }
 
   static init() {
-    rpio.open(this.DOOR, rpio.OUTPUT);
+    //    rpio.open(this.DOOR, rpio.OUTPUT);
 
     process.on('exit', () => Garage.cleanup());
     process.on('SIGINT', () => Garage.cleanup());
@@ -45,7 +45,8 @@ export class Garage {
     console.log("Starting Camera", this.listening);
     clearTimeout(this.killTimeout);
     if (!this.cameraProc) {
-      let args = ['-o', 'output_http.so -w ./www', '-i', 'input_raspicam.so ' + Object.keys(Garage.cameraOptions).map(x => `-${x} ${Garage.cameraOptions[x]}`).join(' ')];
+      let args = ['-o', 'output_http.so -w ./www', '-i', 'input_raspicam.so ' + Object.keys(Garage.cameraOptions)
+        .map(x => `-${x} ${(Garage.cameraOptions as any)[x]}`).join(' ')];
       let env = {
         LD_LIBRARY_PATH: process.cwd(),
         ...process.env
@@ -74,7 +75,7 @@ export class Garage {
   }
 
   static async camera(request: express.Request, response: express.Response, action: 'stream' | 'snapshot' = 'stream') {
-    let closed = false, close = (type, key) => {
+    let closed = false, close = (type: string, key: string) => {
       console.log("Closing", type, key);
       if (closed) {
         return;
@@ -94,14 +95,14 @@ export class Garage {
       host: 'localhost',
       path: `/?action=${action}`
     }, (res) => {
-      response.writeHead(res.statusCode, res.headers);
+      response.writeHead(res.statusCode || 200, res.headers);
       return res.pipe(response, { end: true });
     });
 
-    response.on('close', x => close('close', x));
-    req.on('error', x => close('error', x));
-    response.on('error', x => close('error', x));
-    response.on('finish', x => close('finish', x));
+    response.on('close', (x: any) => close('close', x));
+    req.on('error', (x: any) => close('error', x));
+    response.on('error', (x: any) => close('error', x));
+    response.on('finish', (x: any) => close('finish', x));
 
     req.end();
   }

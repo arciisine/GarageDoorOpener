@@ -25,7 +25,7 @@ app.get('/camera/stream', async (req, res, next) => {
 });
 
 app.get('/camera/snapshot', async (req, res, next) => {
-  await Garage.camera(req, res, false);
+  await Garage.camera(req, res, 'snapshot');
 });
 
 https.createServer(credentials, app).listen(443);
