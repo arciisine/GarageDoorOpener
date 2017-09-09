@@ -108,7 +108,10 @@ export class AppComponent implements OnInit, OnDestroy {
       })
       .then(() => {
         firebase.setValue('/', { Action: 'Activate' });
+      })
+      .catch(e => {
+        // fallback if firebase is down
+        http.request({ url: 'http://192.168.2.119/activate', method: 'POST' });
       });
-    //    http.request({ url: 'http://192.168.2.119/activate', method: 'POST' });
   }
 }
