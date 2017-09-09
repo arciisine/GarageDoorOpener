@@ -15,6 +15,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "955528203315-dnf8bpr7mf2hi22gm2eplu1d2ivvcsth.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "org.arcsine.GarageDoor",
+            "certificate_hash": "d13c962ac1ea635f378362c8cfada600864e846a"
+          }
+        },
+        {
           "client_id": "955528203315-dg7g8bgt1k0aqqirvc3n3s53d52npg0f.apps.googleusercontent.com",
           "client_type": 3
         }
@@ -29,8 +37,13 @@
           "status": 1
         },
         "appinvite_service": {
-          "status": 1,
-          "other_platform_oauth_client": []
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "955528203315-dg7g8bgt1k0aqqirvc3n3s53d52npg0f.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         },
         "ads_service": {
           "status": 2

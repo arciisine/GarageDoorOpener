@@ -32,7 +32,7 @@ export class AppComponent implements OnInit, OnDestroy {
   @ViewChild("image") _webView: ElementRef;
 
   private url = '~/resources/image.html';
-  private firebase: typeof firebase;
+  private user: any;
 
   constructor() {
 
@@ -40,20 +40,33 @@ export class AppComponent implements OnInit, OnDestroy {
     this.stopCamera = this.stopCamera.bind(this);
   }
 
-  async ngOnInit() {
+  ngOnInit() {
     app.on(app.suspendEvent, this.stopCamera);
     app.on(app.resumeEvent, this.startCamera);
     this.startCamera();
     setTimeout(this.startCamera, 5000);
 
-    this.firebase = await firebase.init();
-    let user = await firebase.login({
-      type: firebase.LoginType.GOOGLE,
-      googleOptions: {
-        hostedDomain: "garagedoor.arcsine.org"
+    firebase.init({
+      onAuthStateChanged: (data: any) => {
+        console.log('Auth State Changed', JSON.stringify(data));
+        if (data.loggedIn) {
+          //nn// BackendService.token = data.user.uid;  
+        } else {
+          //nn// BackendService.token = "";  
+        }
       }
-    });
-
+    })
+      .then(fb => {
+        return firebase.login({
+          type: firebase.LoginType.PASSWORD,
+          passwordOptions: {
+            email: 'test@example.org',
+            password: 'testtest1122'
+          }
+        })
+      }).then(u => {
+        this.user = u;
+      });
   }
 
   ngOnDestroy() {
@@ -81,11 +94,11 @@ export class AppComponent implements OnInit, OnDestroy {
     return this._webView.nativeElement as WebView;
   }
 
-  async activate() {
-    if (connectivity.getConnectionType() === connectivity.connectionType.wifi) {
-      http.request({ url: 'http://192.168.2.119/activate', method: 'POST' });
+  activate() {
+    if (this.user) {
+      firebase.setValue('/', { Action: 'Activate' });
     } else {
-      await this.firebase.push('/Action', 'Activate')
+      http.request({ url: 'http://192.168.2.119/activate', method: 'POST' });
     }
   }
 }
