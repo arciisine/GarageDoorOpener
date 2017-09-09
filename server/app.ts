@@ -34,6 +34,8 @@ app.get('/camera/snapshot', async (req, res, next) => {
 listen();
 
 https.createServer(credentials, app)
-  .listen(443)
+  .listen(443);
+
+app
   .listen(80);
 

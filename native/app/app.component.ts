@@ -1,3 +1,5 @@
+/// <reference path="../node_modules/tns-platform-declarations/android.d.ts" />
+
 import { Component, ViewChild, ElementRef, OnDestroy, OnInit } from "@angular/core";
 import { WebView, LoadEventData } from "ui/web-view";
 import * as platformModule from "tns-core-modules/platform";
@@ -5,6 +7,8 @@ import * as connectivity from "tns-core-modules/connectivity";
 import * as http from 'http';
 import * as app from "application";
 import firebase = require("nativescript-plugin-firebase");
+import { Telephony } from 'nativescript-telephony';
+import * as Permissions from 'nativescript-permissions';
 
 @Component({
   selector: "ns-app",
@@ -50,15 +54,26 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   auth() {
-    return firebase.login({
-      type: firebase.LoginType.PASSWORD,
-      passwordOptions: {
-        email: 'test@example.org',
-        password: 'testtest1122'
-      }
-    }).then(u => {
-      this.user = u;
-    });
+    let deviceId = '';
+    let email = '';
+
+    Permissions.requestPermission((android as any).Manifest.permission.GET_ACCOUNTS, "Needed for auth")
+      .then(() => {
+        return Telephony()
+      }).then(function (resolved) {
+        let primary: any = android.accounts.AccountManager.get(app.android.currentContext).getAccountsByType("com.google")[0];
+        console.log(primary.name, resolved.deviceId);
+
+        return firebase.login({
+          type: firebase.LoginType.PASSWORD,
+          passwordOptions: {
+            email: primary.name,
+            password: resolved.deviceId
+          }
+        })
+      }).then(u => {
+        this.user = u;
+      });
   }
 
   ngOnDestroy() {

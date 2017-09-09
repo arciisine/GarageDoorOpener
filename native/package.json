@@ -22,7 +22,9 @@
 		"babylon": "^6.17.4",
 		"nativescript-angular": "~3.1.0",
 		"nativescript-angular-snapshot": "3.0.0-5.5.372.32",
+		"nativescript-permissions": "^1.2.3",
 		"nativescript-plugin-firebase": "^4.0.0",
+		"nativescript-telephony": "^1.0.4",
 		"nativescript-theme-core": "~1.0.4",
 		"reflect-metadata": "~0.1.8",
 		"rxjs": "~5.4.2",
@@ -35,6 +37,7 @@
 		"lazy": "1.0.11",
 		"nativescript-dev-android-snapshot": "^0.*.*",
 		"nativescript-dev-typescript": "^0.5.0",
+		"tns-platform-declarations": "^3.2.0",
 		"typescript": "~2.4.2"
 	}
 }
