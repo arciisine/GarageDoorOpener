@@ -46,27 +46,19 @@ export class AppComponent implements OnInit, OnDestroy {
     this.startCamera();
     setTimeout(this.startCamera, 5000);
 
-    firebase.init({
-      onAuthStateChanged: (data: any) => {
-        console.log('Auth State Changed', JSON.stringify(data));
-        if (data.loggedIn) {
-          //nn// BackendService.token = data.user.uid;  
-        } else {
-          //nn// BackendService.token = "";  
-        }
+    firebase.init();
+  }
+
+  auth() {
+    return firebase.login({
+      type: firebase.LoginType.PASSWORD,
+      passwordOptions: {
+        email: 'test@example.org',
+        password: 'testtest1122'
       }
-    })
-      .then(fb => {
-        return firebase.login({
-          type: firebase.LoginType.PASSWORD,
-          passwordOptions: {
-            email: 'test@example.org',
-            password: 'testtest1122'
-          }
-        })
-      }).then(u => {
-        this.user = u;
-      });
+    }).then(u => {
+      this.user = u;
+    });
   }
 
   ngOnDestroy() {
@@ -95,10 +87,13 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   activate() {
-    if (this.user) {
-      firebase.setValue('/', { Action: 'Activate' });
-    } else {
-      http.request({ url: 'http://192.168.2.119/activate', method: 'POST' });
-    }
+    firebase.getCurrentUser()
+      .catch(e => {
+        return this.auth();
+      })
+      .then(() => {
+        firebase.setValue('/', { Action: 'Activate' });
+      });
+    //    http.request({ url: 'http://192.168.2.119/activate', method: 'POST' });
   }
 }

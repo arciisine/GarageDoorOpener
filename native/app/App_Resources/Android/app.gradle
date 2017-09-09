@@ -22,7 +22,7 @@ android {
   }  
 
   project.ext {
-    googlePlayServicesVersion = "11.0.+"
+    googlePlayServicesVersion = "11.2.2"
   }
 } 
 
