@@ -68,7 +68,7 @@ export class Garage {
       this.cameraProc = proc.spawn('mjpg_streamer', args, {
         env,
         cwd: process.cwd(),
-        stdio: [null, !process.env.DEBUG ? process.stdout : 'ignore', process.stderr]
+        stdio: [null, process.env.DEBUG ? process.stdout : 'ignore', process.stderr]
       });
       await new Promise(resolve => setTimeout(resolve, 2000));
     }
