@@ -8,6 +8,10 @@ import Storage = require('@google-cloud/storage');
 export class Garage {
 
   static DOOR = 18
+  static SNAPSHOT_TIMER: any;
+  static SNAPSHOT_LOCK: boolean = false;
+  static PATH = 'images/door-snap.jpg';
+  static SNAPSHOT_URL = `https://storage.googleapis.com/${config.projectId}/${Garage.PATH}`
 
   static killTimeout: NodeJS.Timer;
   static listening = 0;
@@ -18,8 +22,6 @@ export class Garage {
     fps: 15
   }
 
-  static snapshotTimer: any;
-
   static init() {
     rpio.open(this.DOOR, rpio.OUTPUT);
     process.on('exit', () => Garage.cleanup());
@@ -28,14 +30,14 @@ export class Garage {
   }
 
   static async triggerDoor(action?: string) {
-    this.snapshotTimer = setTimeout(() => Garage.exposeSnapshot(), 20000); // Assume stable point after door opens/closes
+    this.SNAPSHOT_TIMER = setTimeout(() => Garage.exposeSnapshot(), 20000); // Assume stable point after door opens/closes
 
     rpio.write(this.DOOR, rpio.HIGH);
     rpio.sleep(.5)
     rpio.write(this.DOOR, rpio.LOW);
 
-    if (this.snapshotTimer) {
-      clearTimeout(this.snapshotTimer);
+    if (this.SNAPSHOT_TIMER) {
+      clearTimeout(this.SNAPSHOT_TIMER);
     }
   }
 
@@ -119,14 +121,18 @@ export class Garage {
   }
 
   static async exposeSnapshot() {
+    if (Garage.SNAPSHOT_LOCK) {
+      return Garage.SNAPSHOT_URL;
+    }
+    Garage.SNAPSHOT_LOCK = true;
+
     const st = Storage({
       keyFilename: '../google-services.json'
     });
 
     let bucket = await st.bucket(config.storageBucket.split('gs://')[1]);
 
-    const path = 'images/door-snap.jpg';
-    let file = bucket.file(`/${path}`);
+    let file = bucket.file(`/${Garage.PATH}`);
 
     const stream = file.createWriteStream({
       metadata: {
@@ -134,18 +140,24 @@ export class Garage {
       }
     });
 
-    return new Promise((resolve, reject) => {
-      stream.on('error', reject);
-      stream.on('finish', () => {
-        file.makePublic()
-          .then(x => `https://storage.googleapis.com/${bucket.name}/${path}`)
-          .then(resolve, reject);
+    try {
+      let res = await new Promise((resolve, reject) => {
+        stream.on('error', reject);
+        stream.on('finish', () => {
+          file.makePublic()
+            .then(x => Garage.SNAPSHOT_URL)
+            .then(resolve, reject);
+        });
+        try {
+          Garage.camera(stream, 'snapshot');
+        } catch (e) {
+          reject(e);
+        }
       });
-      try {
-        Garage.camera(stream, 'snapshot');
-      } catch (e) {
-        reject(e);
-      }
-    });
+
+      return res;
+    } finally {
+      Garage.SNAPSHOT_LOCK = false;
+    }
   }
 }
