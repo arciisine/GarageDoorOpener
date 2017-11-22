@@ -52,9 +52,7 @@ export class AppComponent implements OnInit, OnDestroy {
     firebase.init();
     app.on(app.suspendEvent, this.suspend);
     app.on(app.resumeEvent, this.resume);
-
-    await this.snapshot()
-    this.startCamera();
+    this.resume();
   }
 
   suspend() {
@@ -62,7 +60,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   async resume() {
-    await this.sendAction('Snapshot');
+    await this.snapshot();
     this.startCamera()
   }
 
@@ -101,7 +99,7 @@ export class AppComponent implements OnInit, OnDestroy {
     app.off(app.resumeEvent, this.resume);
   }
 
-  startCamera() {
+  async startCamera() {
     if (this._webView && this.webViewElement.android) {
       this.webViewElement.android.getSettings().setJavaScriptEnabled(true);
       this.webViewElement.src = this.url + '&nonce=' + Date.now();
@@ -119,24 +117,27 @@ export class AppComponent implements OnInit, OnDestroy {
   async snapshot() {
     await this.sendAction('Snapshot');
     await new Promise(resolve => setTimeout(resolve, 3000));
-    this.startCamera();
   }
 
   get webViewElement() {
     return this._webView.nativeElement as WebView;
   }
 
-  sendAction(name: string) {
-    return firebase.getCurrentUser()
-      .catch(e => this.auth())
-      .then(() => firebase.setValue('/', { Action: name }));
+  async sendAction(name: string) {
+    try {
+      await firebase.getCurrentUser();
+    } catch (e) {
+      await this.auth();
+    }
+    await firebase.setValue('/', { Action: name });
   }
 
   async activate() {
-    await this.sendAction('Activate')
-      .catch(e => {
-        // fallback if firebase is down
-        http.request({ url: `http://${this.ip}/activate`, method: 'POST' });
-      });
+    try {
+      await this.sendAction('Activate');
+    } catch (e) {
+      // fallback if firebase is down
+      http.request({ url: `http://${this.ip}/activate`, method: 'POST' });
+    }
   }
 }
