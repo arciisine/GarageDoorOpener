@@ -23,7 +23,7 @@
 
 <body>
   <script>
-    let params = (window.location.href || '')
+    let params = (window.location.search || '').replace(/^#/, '')
       .split('&')
       .map(x => x.split('=').map(decodeURIComponent))
       .reduce((acc, [a, b]) => {
@@ -32,12 +32,15 @@
       }, {});
 
     let img = document.createElement('img');
-    img.addEventListener('error', () => {
-      setTimeout(() => {
-        img.src = 'https://storage.googleapis.com/' + params.appId + '/images/door.jpg?cache=' + Date.now();
-      }, 3000);
-    });
-    img.src = 'http://' + params.ip + '/camera/stream';
+    img.src = 'https://storage.googleapis.com/' + params.appId + '/images/door.jpg?cache=' + Date.now();
+    document.body.appendChild(img);
+
+    let img2 = document.createElement('img');
+    img2.addEventListener('load', () => {
+      img.remove();
+    })
+    img2.src = 'http://' + params.ip + '/camera/stream';
+    document.body.appendChild(img2);
   </script>
 </body>
 

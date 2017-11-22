@@ -38,72 +38,76 @@ export class AppComponent implements OnInit, OnDestroy {
   private ip = '192.168.1.168';
   private appId = 'garagedoorapp-1d1fe.appspot.com';
 
-  private url = '~/resources/image.html';
+  private url = `~/resources/image.html?ip${this.ip}&appId=${this.appId}`;
   private user: any;
+  private snapshotTimer: any;
 
   constructor() {
 
-    this.startCamera = this.startCamera.bind(this);
-    this.stopCamera = this.stopCamera.bind(this);
+    this.resume = this.resume.bind(this);
+    this.suspend = this.suspend.bind(this);
+    this.snapshot = this.snapshot.bind(this);
   }
 
-  ngOnInit() {
-    app.on(app.suspendEvent, this.stopCamera);
-    app.on(app.resumeEvent, this.startCamera);
-    this.startCamera();
-    setTimeout(this.startCamera, 5000);
-
+  async ngOnInit() {
     firebase.init();
+    app.on(app.suspendEvent, this.suspend);
+    app.on(app.resumeEvent, this.resume);
+
+    await this.snapshot()
+    this.startCamera();
   }
 
-  auth() {
+  suspend() {
+    this.stopCamera();
+  }
+
+  async resume() {
+    await this.sendAction('Snapshot');
+    this.startCamera()
+  }
+
+  async auth() {
     let deviceId = '';
     let email = '';
 
-    Permissions.requestPermission((android as any).Manifest.permission.GET_ACCOUNTS, "Needed for auth")
-      .then(() => {
-        return Telephony()
-      }).then(function (resolved) {
-        let intent = android.accounts.AccountManager.newChooseAccountIntent(null, null, ['com.google'], false, null, null, null, null)
-        app.android.foregroundActivity.startActivityForResult(intent, 1);
+    await Permissions.requestPermission((android as any).Manifest.permission.GET_ACCOUNTS, "Needed for auth")
+    let telephony = await Telephony();
 
-        return new Promise((resolve, reject) => {
-          app.android.on(app.AndroidApplication.activityResultEvent, function (args: app.AndroidActivityResultEventData) {
-            if (args.requestCode === 1) {
-              let all = android.accounts.AccountManager.get(app.android.currentContext).getAccounts();
-              let primary = all[0];
+    let intent = android.accounts.AccountManager.newChooseAccountIntent(null, null, ['com.google'], false, null, null, null, null)
+    app.android.foregroundActivity.startActivityForResult(intent, 1);
 
-              firebase.login({
-                type: firebase.LoginType.PASSWORD,
-                passwordOptions: {
-                  email: primary.name,
-                  password: resolved.deviceId
-                }
-              }).then(resolve, reject);
+    let u = await new Promise((resolve, reject) => {
+      app.android.on(app.AndroidApplication.activityResultEvent, function (args: app.AndroidActivityResultEventData) {
+        if (args.requestCode === 1) {
+          let all = android.accounts.AccountManager.get(app.android.currentContext).getAccounts();
+          let primary = all[0];
 
+          firebase.login({
+            type: firebase.LoginType.PASSWORD,
+            passwordOptions: {
+              email: primary.name,
+              password: telephony.deviceId
             }
-          })
-        });
-      }).then(u => {
-        this.user = u;
-      });
+          }).then(resolve, reject);
+
+        }
+      })
+    });
+    this.user = u;
   }
 
   ngOnDestroy() {
-    app.off(app.suspendEvent, this.stopCamera);
-    app.off(app.resumeEvent, this.startCamera);
+    app.off(app.suspendEvent, this.suspend);
+    app.off(app.resumeEvent, this.resume);
   }
 
   startCamera() {
-    if (this._webView) {
-      this.webViewElement.android.getSetting().setJavaScriptEnabled(true);
-      this.sendAction('Snapshot');
-
-      if (this.webViewElement.src !== this.url) {
-        this.webViewElement.src = `${this.url}?ip${this.ip}&appId=${this.appId}`;
-      } else {
-        this.webViewElement.reload();
-      }
+    if (this._webView && this.webViewElement.android) {
+      this.webViewElement.android.getSettings().setJavaScriptEnabled(true);
+      this.webViewElement.src = this.url + '&nonce=' + Date.now();
+    } else {
+      setTimeout(this.startCamera, 1000);
     }
   }
 
@@ -113,25 +117,34 @@ export class AppComponent implements OnInit, OnDestroy {
     }
   }
 
+  async snapshot() {
+    await this.sendAction('Snapshot');
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    this.startCamera();
+  }
+
   get webViewElement() {
     return this._webView.nativeElement as WebView;
   }
 
   sendAction(name: string) {
     return firebase.getCurrentUser()
-      .catch(e => {
-        return this.auth();
-      })
-      .then(() => {
-        firebase.setValue('/', { Action: name });
-      });
+      .catch(e => this.auth())
+      .then(() => firebase.setValue('/', { Action: name }));
   }
 
-  activate() {
-    this.sendAction('Activate')
+  async activate() {
+    await this.sendAction('Activate')
       .catch(e => {
         // fallback if firebase is down
         http.request({ url: `http://${this.ip}/activate`, method: 'POST' });
       });
+
+    if (this.snapshotTimer) {
+      clearTimeout(this.snapshotTimer);
+    }
+
+    this.snapshotTimer = setTimeout(this.snapshot, 20000);
+
   }
 }
