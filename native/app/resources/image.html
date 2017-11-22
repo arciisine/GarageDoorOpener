@@ -22,14 +22,22 @@
 </head>
 
 <body>
-  <img src="http://192.168.1.168/camera/stream">
   <script>
-    let img = document.getElementsByName('img')[0];
+    let params = (window.location.href || '')
+      .split('&')
+      .map(x => x.split('=').map(decodeURIComponent))
+      .reduce((acc, [a, b]) => {
+        acc[a] = b;
+        return acc;
+      }, {});
+
+    let img = document.createElement('img');
     img.addEventListener('error', () => {
       setTimeout(() => {
-        img.src = 'https://storage.googleapis.com/garagedoorapp-1d1fe.appspot.com/images/door.jpg';
+        img.src = 'https://storage.googleapis.com/' + params.appId + '/images/door.jpg?cache=' + Date.now();
       }, 3000);
     });
+    img.src = 'http://' + params.ip + '/camera/stream';
   </script>
 </body>
 

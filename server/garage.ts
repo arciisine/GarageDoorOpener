@@ -115,7 +115,7 @@ export class Garage {
       keyFilename: '../google-services.json'
     });
 
-    let bucket = await st.bucket(config.storageBucket);
+    let bucket = await st.bucket(config.storageBucket.split('gs://')[1]);
     const path = 'images/door.jpg';
     let file = bucket.file(path);
 

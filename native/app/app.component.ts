@@ -35,6 +35,9 @@ export class AppComponent implements OnInit, OnDestroy {
 
   @ViewChild("image") _webView: ElementRef;
 
+  private ip = '192.168.1.168';
+  private appId = 'garagedoorapp-1d1fe.appspot.com';
+
   private url = '~/resources/image.html';
   private user: any;
 
@@ -93,8 +96,11 @@ export class AppComponent implements OnInit, OnDestroy {
 
   startCamera() {
     if (this._webView) {
+      this.webViewElement.android.getSetting().setJavaScriptEnabled(true);
+      this.sendAction('Snapshot');
+
       if (this.webViewElement.src !== this.url) {
-        this.webViewElement.src = this.url;
+        this.webViewElement.src = `${this.url}?ip${this.ip}&appId=${this.appId}`;
       } else {
         this.webViewElement.reload();
       }
@@ -111,17 +117,21 @@ export class AppComponent implements OnInit, OnDestroy {
     return this._webView.nativeElement as WebView;
   }
 
-  activate() {
-    firebase.getCurrentUser()
+  sendAction(name: string) {
+    return firebase.getCurrentUser()
       .catch(e => {
         return this.auth();
       })
       .then(() => {
-        firebase.setValue('/', { Action: 'Activate' });
-      })
+        firebase.setValue('/', { Action: name });
+      });
+  }
+
+  activate() {
+    this.sendAction('Activate')
       .catch(e => {
         // fallback if firebase is down
-        http.request({ url: 'http://192.168.1.168/activate', method: 'POST' });
+        http.request({ url: `http://${this.ip}/activate`, method: 'POST' });
       });
   }
 }
