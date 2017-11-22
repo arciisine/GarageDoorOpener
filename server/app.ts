@@ -30,9 +30,9 @@ app.get('/camera/snapshot', async (req, res, next) => {
   await Garage.camera(res, 'snapshot');
 });
 
-app.get('/camera/exposeSnapshot', async (req, res, next) => {
-  await Garage.exposeSnapshot();
-  res.send();
+app.post('/camera/exposeSnapshot', async (req, res, next) => {
+  let url = await Garage.exposeSnapshot();
+  res.json({ url });
 });
 
 

@@ -112,14 +112,31 @@ export class Garage {
 
   static async exposeSnapshot() {
     const st = Storage({
-      keyFilename: '../google-services.json',
-      projectId: config.projectId
+      keyFilename: '../google-services.json'
     });
 
-    let [buckets] = await st.getBuckets();
-    let bucket = buckets[0];
-    let file = bucket.file('images/door.jpg');
-    await Garage.camera(file.createWriteStream(), 'snapshot');
-    await file.makePublic()
+    let bucket = await st.bucket(config.storageBucket);
+    const path = 'images/door.jpg';
+    let file = bucket.file(path);
+
+    const stream = file.createWriteStream({
+      metadata: {
+        contentType: 'image/jpeg'
+      }
+    });
+
+    return await new Promise((resolve, reject) => {
+      Garage.camera(stream, 'snapshot');
+
+      stream.on('error', err => {
+        reject(err);
+      });
+
+      stream.on('finish', () => {
+        file.makePublic()
+          .then(x => `https://storage.googleapis.com/${bucket.name}/${path}`)
+          .then(resolve);
+      });
+    });
   }
 }
