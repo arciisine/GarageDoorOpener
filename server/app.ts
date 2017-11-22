@@ -31,8 +31,12 @@ app.get('/camera/snapshot', async (req, res, next) => {
 });
 
 app.post('/camera/exposeSnapshot', async (req, res, next) => {
-  let url = await Garage.exposeSnapshot();
-  res.json({ url });
+  try {
+    let url = await Garage.exposeSnapshot();
+    res.json({ url });
+  } catch (e) {
+    res.status(500).json(e)
+  }
 });
 
 

@@ -125,7 +125,7 @@ export class Garage {
 
     let bucket = await st.bucket(config.storageBucket.split('gs://')[1]);
     const path = 'images/door.jpg';
-    let file = bucket.file(path);
+    let file = bucket.file(`/${path}`);
 
     const stream = file.createWriteStream({
       metadata: {
@@ -133,18 +133,18 @@ export class Garage {
       }
     });
 
-    return await new Promise((resolve, reject) => {
-      Garage.camera(stream, 'snapshot');
-
-      stream.on('error', err => {
-        reject(err);
-      });
-
+    return new Promise((resolve, reject) => {
+      stream.on('error', reject);
       stream.on('finish', () => {
         file.makePublic()
           .then(x => `https://storage.googleapis.com/${bucket.name}/${path}`)
-          .then(resolve);
+          .then(resolve, reject);
       });
+      try {
+        Garage.camera(stream, 'snapshot');
+      } catch (e) {
+        reject(e);
+      }
     });
   }
 }
