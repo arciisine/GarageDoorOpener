@@ -23,12 +23,18 @@ app.post('/activate', async (req, res, next) => {
 });
 
 app.get('/camera/stream', async (req, res, next) => {
-  await Garage.camera(req, res);
+  await Garage.camera(res);
 });
 
 app.get('/camera/snapshot', async (req, res, next) => {
-  await Garage.camera(req, res, 'snapshot');
+  await Garage.camera(res, 'snapshot');
 });
+
+app.get('/camera/exposeSnapshot', async (req, res, next) => {
+  await Garage.exposeSnapshot();
+  res.send();
+});
+
 
 //Listen for firebase
 listen();

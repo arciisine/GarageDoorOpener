@@ -14,7 +14,7 @@
     "@types/node": "^8.0.27",
     "@types/rpio": "0.0.1",
     "express": "^4.15.3",
-    "firebase": "^4.3.1",
+    "firebase": "^4.6.2",
     "rpio": "^0.9.17",
     "ts-node": "^3.3.0",
     "typescript": "^2.5.2"

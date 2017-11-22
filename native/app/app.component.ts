@@ -61,16 +61,26 @@ export class AppComponent implements OnInit, OnDestroy {
       .then(() => {
         return Telephony()
       }).then(function (resolved) {
-        let primary: any = android.accounts.AccountManager.get(app.android.currentContext).getAccountsByType("com.google")[0];
-        console.log(primary.name, resolved.deviceId);
+        let intent = android.accounts.AccountManager.newChooseAccountIntent(null, null, ['com.google'], false, null, null, null, null)
+        app.android.foregroundActivity.startActivityForResult(intent, 1);
 
-        return firebase.login({
-          type: firebase.LoginType.PASSWORD,
-          passwordOptions: {
-            email: primary.name,
-            password: resolved.deviceId
-          }
-        })
+        return new Promise((resolve, reject) => {
+          app.android.on(app.AndroidApplication.activityResultEvent, function (args: app.AndroidActivityResultEventData) {
+            if (args.requestCode === 1) {
+              let all = android.accounts.AccountManager.get(app.android.currentContext).getAccounts();
+              let primary = all[0];
+
+              firebase.login({
+                type: firebase.LoginType.PASSWORD,
+                passwordOptions: {
+                  email: primary.name,
+                  password: resolved.deviceId
+                }
+              }).then(resolve, reject);
+
+            }
+          })
+        });
       }).then(u => {
         this.user = u;
       });

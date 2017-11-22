@@ -2,7 +2,8 @@ import * as http from 'http';
 import * as express from 'express';
 import * as proc from 'child_process';
 import * as rpio from 'rpio';
-
+import { ToString } from './to-string';
+import { storeImage } from './firebase';
 export class Garage {
 
   static DOOR = 18
@@ -73,7 +74,7 @@ export class Garage {
     }
   }
 
-  static async camera(request: express.Request, response: express.Response, action: 'stream' | 'snapshot' = 'stream') {
+  static async camera(response: NodeJS.WritableStream, action: 'stream' | 'snapshot' = 'stream') {
     let closed = false, close = (type: string, key: string) => {
       console.log("Closing", type, key);
       if (closed) {
@@ -94,7 +95,9 @@ export class Garage {
       host: 'localhost',
       path: `/?action=${action}`
     }, (res) => {
-      response.writeHead(res.statusCode || 200, res.headers);
+      if ('writeHead' in response) {
+        (response as express.Response).writeHead(res.statusCode || 200, res.headers);
+      }
       return res.pipe(response, { end: true });
     });
 
@@ -104,5 +107,16 @@ export class Garage {
     response.on('finish', (x: any) => close('finish', x));
 
     req.end();
+  }
+
+  static async exposeSnapshot() {
+    let data = await new Promise<Uint8Array>((resolve, reject) => {
+      let emitter = new ToString();
+      Garage.camera(emitter, 'snapshot')
+        .then(done => resolve(emitter.data))
+        .catch(reject)
+    });
+
+    await storeImage('images/door.jpg', data);
   }
 }

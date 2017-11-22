@@ -1,7 +1,9 @@
 import * as firebase from 'firebase';
 import { Garage } from './garage';
+import { EventEmitter } from 'events';
 
-const app = firebase.initializeApp(require('../firebase-config'));
+const conf = require('../firebase-config');
+const app = firebase.initializeApp(conf);
 
 export async function listen() {
   await app.auth().signInAnonymously();
@@ -33,4 +35,11 @@ export async function listen() {
       }
     }
   });
+}
+
+export async function storeImage(path: string, data: Uint8Array) {
+  await app.auth().signInAnonymously();
+  let ref = await app.storage().ref();
+  let img = ref.child(path);
+  ref.put(data);
 }
