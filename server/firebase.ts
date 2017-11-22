@@ -34,6 +34,9 @@ export async function listen() {
         case 'Close':
           Garage.triggerDoor(item.val());
           break;
+        case 'Snapshot':
+          Garage.exposeSnapshot();
+          break;
       }
     }
   });
