@@ -18,6 +18,8 @@ export class Garage {
     fps: 15
   }
 
+  static snapshotTimer: any;
+
   static init() {
     rpio.open(this.DOOR, rpio.OUTPUT);
     process.on('exit', () => Garage.cleanup());
@@ -26,9 +28,15 @@ export class Garage {
   }
 
   static async triggerDoor(action?: string) {
+    this.snapshotTimer = setTimeout(() => Garage.exposeSnapshot(), 20000); // Assume stable point after door opens/closes
+
     rpio.write(this.DOOR, rpio.HIGH);
     rpio.sleep(.5)
     rpio.write(this.DOOR, rpio.LOW);
+
+    if (this.snapshotTimer) {
+      clearTimeout(this.snapshotTimer);
+    }
   }
 
   static cleanup() {

@@ -40,7 +40,6 @@ export class AppComponent implements OnInit, OnDestroy {
 
   private url = `~/resources/image.html?ip${this.ip}&appId=${this.appId}`;
   private user: any;
-  private snapshotTimer: any;
 
   constructor() {
 
@@ -139,12 +138,5 @@ export class AppComponent implements OnInit, OnDestroy {
         // fallback if firebase is down
         http.request({ url: `http://${this.ip}/activate`, method: 'POST' });
       });
-
-    if (this.snapshotTimer) {
-      clearTimeout(this.snapshotTimer);
-    }
-
-    this.snapshotTimer = setTimeout(this.snapshot, 20000);
-
   }
 }

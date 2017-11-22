@@ -23,7 +23,7 @@
 
 <body>
   <script>
-    let params = (window.location.search || '').replace(/^#/, '')
+    let params = (window.location.search || '').replace(/^\?/, '')
       .split('&')
       .map(x => x.split('=').map(decodeURIComponent))
       .reduce((acc, [a, b]) => {
