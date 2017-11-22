@@ -124,7 +124,8 @@ export class Garage {
     });
 
     let bucket = await st.bucket(config.storageBucket.split('gs://')[1]);
-    const path = 'images/door.jpg';
+
+    const path = 'images/door-snap.jpg';
     let file = bucket.file(`/${path}`);
 
     const stream = file.createWriteStream({
