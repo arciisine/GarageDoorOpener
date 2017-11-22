@@ -1,27 +1,36 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 
-  <head>
-    <style>
-      html,
-      body {
-        padding: 0;
-        margin: 0;
-        width: 100%;
-        height: 100%;
-        position: fixed;
-        overflow: hidden;
-        text-align: center;
-        background: black;
-      }
+<head>
+  <style>
+    html,
+    body {
+      padding: 0;
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      position: fixed;
+      overflow: hidden;
+      text-align: center;
+      background: black;
+    }
 
-      img {
-        height: 100%;
-      }
+    img {
+      height: 100%;
+    }
+  </style>
+</head>
 
-    </style>
-  </head>
-
-  <body> <img src="http://192.168.2.119/camera/stream"> </body>
+<body>
+  <img src="http://192.168.1.168/camera/stream">
+  <script>
+    let img = document.getElementsByName('img')[0];
+    img.addEventListener('error', () => {
+      setTimeout(() => {
+        img.src = 'https://storage.googleapis.com/garagedoorapp-1d1fe.appspot.com/images/door.jpg';
+      }, 3000);
+    });
+  </script>
+</body>
 
 </html>
