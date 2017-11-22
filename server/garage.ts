@@ -31,15 +31,15 @@ export class Garage {
   }
 
   static async triggerDoor(action?: string) {
-    this.SNAPSHOT_TIMER = setTimeout(() => Garage.exposeSnapshot(), 20000); // Assume stable point after door opens/closes
-
-    rpio.write(this.DOOR, rpio.HIGH);
-    rpio.sleep(.5)
-    rpio.write(this.DOOR, rpio.LOW);
-
+    console.log('Triggering Door', action);
     if (this.SNAPSHOT_TIMER) {
       clearTimeout(this.SNAPSHOT_TIMER);
     }
+    this.SNAPSHOT_TIMER = setTimeout(() => Garage.exposeSnapshot(), 20000); // Assume stable point after door opens/closes
+
+    rpio.write(this.DOOR, rpio.HIGH);
+    rpio.sleep(1)
+    rpio.write(this.DOOR, rpio.LOW);
   }
 
   static cleanup() {
@@ -127,6 +127,7 @@ export class Garage {
       return Garage.SNAPSHOT_URL;
     }
     Garage.SNAPSHOT_LOCK = true;
+    console.log('Taking snapshot');
 
     const st = Storage({
       keyFilename: '../google-services.json'
