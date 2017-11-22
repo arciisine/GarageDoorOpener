@@ -101,6 +101,8 @@ export class AppComponent implements OnInit, OnDestroy {
       })
     });
     this.user = u;
+    // Clear out after use, so if needed again, it will not cache
+    setTimeout(() => this._auth = undefined, 1);
   }
 
   ngOnDestroy() {
