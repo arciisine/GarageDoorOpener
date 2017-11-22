@@ -32,10 +32,13 @@ export class Garage {
 
   static async triggerDoor(action?: string) {
     console.log('[Door] Triggering', action);
+
     if (this.SNAPSHOT_TIMER) {
       clearTimeout(this.SNAPSHOT_TIMER);
     }
-    this.SNAPSHOT_TIMER = setTimeout(() => Garage.exposeSnapshot(), 20000); // Assume stable point after door opens/closes
+
+    // Assume stable point after door opens/closes
+    this.SNAPSHOT_TIMER = setTimeout(() => this.SNAPSHOT_TIMER = undefined, 20000);
 
     rpio.write(this.DOOR, rpio.HIGH);
     rpio.sleep(1)
@@ -167,10 +170,10 @@ export class Garage {
       console.log('[Snapshot] Failed');
     } finally {
       Garage.SNAPSHOT_LOCK = false;
-      if (Garage.SNAPHSHOT_PENDING) {
+      if (Garage.SNAPHSHOT_PENDING || Garage.SNAPSHOT_TIMER !== undefined) {
         Garage.SNAPHSHOT_PENDING = false;
-        console.log('[Snapshot] Processing queued');
-        Garage.exposeSnapshot(); // Handle stalled calls
+        console.log('[Snapshot] Processing ' + (Garage.SNAPHSHOT_PENDING ? 'pending' : 'scheduled'));
+        process.nextTick(() => Garage.exposeSnapshot()); // Handle stalled calls
       }
     }
   }

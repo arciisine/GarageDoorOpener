@@ -14,8 +14,8 @@ export async function listen() {
   console.log('[Firebase] Listening');
 
   ref.on('child_added', function (item) {
-    if (!item) {
-      console.log('[Firebase] Received empty');
+    if (!item || !item.exists) {
+      console.log('[Firebase] Received ' + (!item ? 'empty' : 'expired'));
       return;
     } else {
       console.log(`[Firebase] ${item.key} ${item.val()}`);
