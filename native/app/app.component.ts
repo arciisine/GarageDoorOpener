@@ -41,6 +41,8 @@ export class AppComponent implements OnInit, OnDestroy {
   private url = `~/resources/image.html?ip${this.ip}&appId=${this.appId}`;
   private user: any;
 
+  private authPerm: Promise<any>;
+
   constructor() {
 
     this.resume = this.resume.bind(this);
@@ -65,6 +67,13 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   async auth() {
+    if (!this.authPerm) {
+      this.authPerm = this._auth();
+    }
+    return this.authPerm;
+  }
+
+  async _auth() {
     let deviceId = '';
     let email = '';
 

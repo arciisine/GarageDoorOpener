@@ -12,6 +12,7 @@ export class Garage {
   static SNAPSHOT_LOCK: boolean = false;
   static PATH = 'images/door-snap.jpg';
   static SNAPSHOT_URL = `https://storage.googleapis.com/${config.projectId}/${Garage.PATH}`
+  static SNAPHSHOT_PENDING = false;
 
   static killTimeout: NodeJS.Timer;
   static listening = 0;
@@ -122,6 +123,7 @@ export class Garage {
 
   static async exposeSnapshot() {
     if (Garage.SNAPSHOT_LOCK) {
+      Garage.SNAPHSHOT_PENDING = true;
       return Garage.SNAPSHOT_URL;
     }
     Garage.SNAPSHOT_LOCK = true;
@@ -158,6 +160,10 @@ export class Garage {
       return res;
     } finally {
       Garage.SNAPSHOT_LOCK = false;
+      if (Garage.SNAPHSHOT_PENDING) {
+        Garage.SNAPHSHOT_PENDING = false;
+        Garage.exposeSnapshot(); // Handle stalled calls
+      }
     }
   }
 }
