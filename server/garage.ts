@@ -31,7 +31,7 @@ export class Garage {
   }
 
   static async triggerDoor(action?: string) {
-    console.log('Triggering Door', action);
+    console.log('[Door] Triggering', action);
     if (this.SNAPSHOT_TIMER) {
       clearTimeout(this.SNAPSHOT_TIMER);
     }
@@ -44,6 +44,7 @@ export class Garage {
 
   static cleanup() {
     if (this.cameraProc) {
+      console.log('[Camera] Cleanup');
       try {
         this.cameraProc.kill();
       } catch (e) {
@@ -54,7 +55,7 @@ export class Garage {
   }
 
   static async startCamera() {
-    console.log("Starting Camera", this.listening);
+    console.log("[Camera] Starting", this.listening);
     clearTimeout(this.killTimeout);
     if (!this.cameraProc) {
       let args = ['-o', 'output_http.so -w ./www', '-i', 'input_raspicam.so ' + Object.keys(Garage.cameraOptions)
@@ -75,12 +76,12 @@ export class Garage {
   }
 
   static async stopCamera() {
-    console.log("Stopping Camera", this.listening);
+    console.log("[Camera] Stopping", this.listening);
     if (this.listening === 0 && this.cameraProc) {
       try {
         this.cameraProc.kill('SIGINT');
       } catch (e) {
-        console.log("Cannot kill", e.message);
+        console.log("[Camera] Cannot kill", e.message);
       }
       delete this.cameraProc;
     }
@@ -88,18 +89,18 @@ export class Garage {
 
   static async camera(response: NodeJS.WritableStream, action: 'stream' | 'snapshot' = 'stream') {
     let closed = false, close = (type: string, key: string) => {
-      console.log("Closing", type, key);
+      console.log("[Camera] Closing", type, key);
       if (closed) {
         return;
       }
       this.listening--;
       closed = true;
-      console.log("Camera Request End", this.listening);
+      console.log("[Camera] Request End", this.listening);
       this.killTimeout = setTimeout(() => this.stopCamera(), 1000 * 30);
     };
 
     this.listening++;
-    console.log("Camera Request Start", this.listening);
+    console.log("[Camera] Request Start", this.listening);
     await this.startCamera();
 
     let req = http.request({
@@ -123,11 +124,12 @@ export class Garage {
 
   static async exposeSnapshot() {
     if (Garage.SNAPSHOT_LOCK) {
+      console.log('[Snapshot] Queued');
       Garage.SNAPHSHOT_PENDING = true;
       return Garage.SNAPSHOT_URL;
     }
     Garage.SNAPSHOT_LOCK = true;
-    console.log('Taking snapshot');
+    console.log('[Snapshot] Starting');
 
     const st = Storage({
       keyFilename: '../google-services.json'
@@ -158,11 +160,16 @@ export class Garage {
         }
       });
 
+      console.log('[Snapshot] Success');
+
       return res;
+    } catch (e) {
+      console.log('[Snapshot] Failed');
     } finally {
       Garage.SNAPSHOT_LOCK = false;
       if (Garage.SNAPHSHOT_PENDING) {
         Garage.SNAPHSHOT_PENDING = false;
+        console.log('[Snapshot] Processing queued');
         Garage.exposeSnapshot(); // Handle stalled calls
       }
     }

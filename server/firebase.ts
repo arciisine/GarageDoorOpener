@@ -11,12 +11,14 @@ export async function listen() {
   await app.auth().signInAnonymously();
 
   let ref = app.database().ref();
-  console.log('Listening');
+  console.log('[Firebase] Listening');
 
   ref.on('child_added', function (item) {
     if (!item) {
-      console.log('Received empty');
+      console.log('[Firebase] Received empty');
       return;
+    } else {
+      console.log(`[Firebase] ${item.key} ${item.val()}`);
     }
     //Read action/query from event
     const act = (item.val().action || '').toLowerCase();
