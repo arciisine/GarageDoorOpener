@@ -47,14 +47,14 @@ export class AppComponent implements OnInit, OnDestroy {
 
     this.resume = this.resume.bind(this);
     this.suspend = this.suspend.bind(this);
-    this.snapshot = this.snapshot.bind(this);
+    this.startCamera = this.startCamera.bind(this);
   }
 
   async ngOnInit() {
     firebase.init();
     app.on(app.suspendEvent, this.suspend);
     app.on(app.resumeEvent, this.resume);
-    this.startCamera();
+    this.resume();
   }
 
   suspend() {
@@ -127,7 +127,6 @@ export class AppComponent implements OnInit, OnDestroy {
 
   async snapshot() {
     await this.sendMessage('Snapshot');
-    await new Promise(resolve => setTimeout(resolve, 3000));
   }
 
   get webViewElement() {
