@@ -34,11 +34,18 @@
     let img = document.createElement('img');
     img.src = 'https://storage.googleapis.com/' + params.appId + '/images/door-snap.jpg?cache=' + Date.now();
     document.body.appendChild(img);
+    img.remove = img.remove.bind(img);
 
     let img2 = document.createElement('img');
-    img2.addEventListener('load', () => {
-      img.remove();
-    })
+    img2.addEventListener('error', () => {
+      img2.removeEventListener('load', img.remove);
+      img2.remove();
+      setInterval(() => {
+        img.src = img.src.replace(/=.+/, Date.now());
+      }, 2000);
+    });
+    img2.addEventListener('load', img.remove);
+
     img2.src = 'http://' + params.ip + '/camera/stream';
     document.body.appendChild(img2);
   </script>

@@ -27,17 +27,13 @@ export async function listen() {
       ref.child(item.key).remove();
     }
 
-    if (item.key === 'Action') {
-      switch (item.val()) {
-        case 'Activate':
-        case 'Open':
-        case 'Close':
-          Garage.triggerDoor(item.val());
-          break;
-        case 'Snapshot':
-          Garage.exposeSnapshot();
-          break;
-      }
+    switch (item.key) {
+      case 'Activate':
+        Garage.triggerDoor(item.val());
+        break;
+      case 'Snapshot':
+        Garage.exposeSnapshot();
+        break;
     }
   });
 }

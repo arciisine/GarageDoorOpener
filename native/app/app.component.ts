@@ -115,7 +115,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   async snapshot() {
-    await this.sendAction('Snapshot');
+    await this.sendMessage('Snapshot');
     await new Promise(resolve => setTimeout(resolve, 3000));
   }
 
@@ -123,18 +123,18 @@ export class AppComponent implements OnInit, OnDestroy {
     return this._webView.nativeElement as WebView;
   }
 
-  async sendAction(name: string) {
+  async sendMessage(key: string, value?: any) {
     try {
       await firebase.getCurrentUser();
     } catch (e) {
       await this.auth();
     }
-    await firebase.setValue('/', { Action: name });
+    await firebase.setValue('/', { [key]: value });
   }
 
   async activate() {
     try {
-      await this.sendAction('Activate');
+      await this.sendMessage('Activate');
     } catch (e) {
       // fallback if firebase is down
       http.request({ url: `http://${this.ip}/activate`, method: 'POST' });
