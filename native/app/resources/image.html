@@ -34,15 +34,24 @@
     let img = document.createElement('img');
     img.src = 'https://storage.googleapis.com/' + params.appId + '/images/door-snap.jpg?cache=' + Date.now();
     document.body.appendChild(img);
+
+    function reload() {
+      img.src = img.src.replace(/=.+/, Date.now())
+    }
+
     img.remove = img.remove.bind(img);
+    img.addEventListener('error', () => setTimeout(reload, 500));
 
     let img2 = document.createElement('img');
+    let imgTimer;
+
     img2.addEventListener('error', () => {
       img2.removeEventListener('load', img.remove);
       img2.remove();
-      setInterval(() => {
-        img.src = img.src.replace(/=.+/, Date.now());
-      }, 2000);
+      if (imgTimer) {
+        clearInterval(imgTimer);
+      }
+      imgTimer = setInterval(reload, 2000);
     });
     img2.addEventListener('load', img.remove);
 

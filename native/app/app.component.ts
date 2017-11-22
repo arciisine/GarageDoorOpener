@@ -54,7 +54,7 @@ export class AppComponent implements OnInit, OnDestroy {
     firebase.init();
     app.on(app.suspendEvent, this.suspend);
     app.on(app.resumeEvent, this.resume);
-    this.resume();
+    this.startCamera();
   }
 
   suspend() {
@@ -62,8 +62,8 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   async resume() {
-    await this.snapshot();
     this.startCamera()
+    this.snapshot();
   }
 
   async auth() {
@@ -115,7 +115,7 @@ export class AppComponent implements OnInit, OnDestroy {
       this.webViewElement.android.getSettings().setJavaScriptEnabled(true);
       this.webViewElement.src = this.url + '&nonce=' + Date.now();
     } else {
-      setTimeout(this.startCamera, 1000);
+      setTimeout(this.startCamera, 10);
     }
   }
 
