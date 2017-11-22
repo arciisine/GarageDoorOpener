@@ -2,8 +2,9 @@ import * as http from 'http';
 import * as express from 'express';
 import * as proc from 'child_process';
 import * as rpio from 'rpio';
-import { ToString } from './to-string';
-import { storeImage } from './firebase';
+import { config } from './firebase';
+import Storage = require('@google-cloud/storage');
+
 export class Garage {
 
   static DOOR = 18
@@ -110,13 +111,15 @@ export class Garage {
   }
 
   static async exposeSnapshot() {
-    let data = await new Promise<Uint8Array>((resolve, reject) => {
-      let emitter = new ToString();
-      Garage.camera(emitter, 'snapshot')
-        .then(done => resolve(emitter.data))
-        .catch(reject)
+    const st = Storage({
+      keyFilename: '../google-services.json',
+      projectId: config.projectId
     });
 
-    await storeImage('images/door.jpg', data);
+    let [buckets] = await st.getBuckets();
+    let bucket = buckets[0];
+    let file = bucket.file('images/door.jpg');
+    await Garage.camera(file.createWriteStream(), 'snapshot');
+    await file.makePublic()
   }
 }
