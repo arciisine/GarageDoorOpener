@@ -34,6 +34,7 @@ export async function listen() {
     if (seen.get(item.key!) === time) {
       console.log(`[Firebase] Already processed event ${item.key}=${value} @ ${time}`);
     } else {
+      console.log(`[Firebase] Raw Event { ${item.key} : ${JSON.stringify(item.val())} }`);
       console.log(`[Firebase] Processing ${item.key}=${value} @ ${time}`);
     }
 
