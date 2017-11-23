@@ -175,7 +175,7 @@ export class Garage {
       if (Garage.SNAPHSHOT_PENDING || Garage.SNAPSHOT_TIMER !== undefined) {
         console.log('[Snapshot] Processing ' + (Garage.SNAPHSHOT_PENDING ? 'pending' : 'scheduled'));
         Garage.SNAPHSHOT_PENDING = false;
-        process.nextTick(() => Garage.exposeSnapshot()); // Handle stalled calls
+        setTimeout(() => Garage.exposeSnapshot(), Garage.SNAPSHOT_TIMER === undefined ? 0 : 2000); // Handle stalled calls
       }
     }
   }

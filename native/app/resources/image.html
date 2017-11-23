@@ -36,7 +36,9 @@
     document.body.appendChild(img);
 
     function reload() {
-      img.src = img.src.replace(/=.+/, Date.now())
+      let src = img.src.replace(/=.+/, Date.now())
+      img.src = '';
+      setTimeout(() => img.src = src, 0);
     }
 
     img.remove = img.remove.bind(img);
@@ -46,7 +48,7 @@
     let imgTimer;
 
     img2.addEventListener('error', () => {
-      img2.removeEventListener('load', img.remove);
+      img2.removeEventListener('load', () => img.remove());
       img2.remove();
       if (imgTimer) {
         clearInterval(imgTimer);
