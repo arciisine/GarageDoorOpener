@@ -13,25 +13,33 @@ export async function listen() {
   let ref = app.database().ref();
   console.log('[Firebase] Listening');
 
+  let seen = new Map<string, number>();
+
   ref.on('child_added', function (item) {
     if (!item || !item.exists) {
       console.log('[Firebase] Received ' + (!item ? 'empty' : 'expired'));
       return;
-    } else {
-      console.log(`[Firebase] ${item.key} ${item.val()}`);
     }
-    //Read action/query from event
-    const act = (item.val().action || '').toLowerCase();
-    const query = (item.val().query || '').toLowerCase();
-
     //Consume message
     if (item.key) {
       ref.child(item.key).remove();
     }
 
+    //Read action/query from event
+    const value = (item.val().value || '').toLowerCase();
+    let time = (item.val().time || 0);
+    time = time - (time % 1000);
+
+
+    if (seen.get(item.key!) === time) {
+      console.log(`[Firebase] Already processed event ${item.key}=${value} @ ${time}`);
+    } else {
+      console.log(`[Firebase] Processing ${item.key}=${value} @ ${time}`);
+    }
+
     switch (item.key) {
       case 'Activate':
-        Garage.triggerDoor(item.val());
+        Garage.triggerDoor(value);
         break;
       case 'Snapshot':
         Garage.exposeSnapshot();
