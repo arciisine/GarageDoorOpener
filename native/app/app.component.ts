@@ -40,6 +40,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
   private url = `~/resources/image.html?ip${this.ip}&appId=${this.appId}`;
   private user: any;
+  private lastSent = 0;
 
   private authPerm: Promise<any>;
 
@@ -144,6 +145,9 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   async activate() {
+    if (Date.now() < (this.lastSent + 2000)) { // Don't double tap
+      return;
+    }
     try {
       await this.sendMessage('Activate');
     } catch (e) {
