@@ -7,8 +7,10 @@ import * as connectivity from "tns-core-modules/connectivity";
 import * as http from 'http';
 import * as app from "application";
 import firebase = require("nativescript-plugin-firebase");
-import { Telephony } from 'nativescript-telephony';
 import * as Permissions from 'nativescript-permissions';
+import { Telephony } from 'nativescript-telephony';
+
+import { SETTINGS } from './android.activity';
 
 @Component({
   selector: "ns-app",
@@ -52,19 +54,28 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   async ngOnInit() {
+    console.log('Initted');
     firebase.init();
     app.on(app.suspendEvent, this.suspend);
     app.on(app.resumeEvent, this.resume);
+    app.on(app.exitEvent, this.ngOnDestroy.bind(this));
     this.resume();
   }
 
   suspend() {
+    console.log('Suspended');
     this.stopCamera();
   }
 
   async resume() {
+    console.log('Resumed');
     this.startCamera()
     this.snapshot();
+
+    if (SETTINGS.voice) {
+      SETTINGS.voice = false;
+      this.activate();
+    }
   }
 
   async auth() {
@@ -107,6 +118,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    this.suspend();
     app.off(app.suspendEvent, this.suspend);
     app.off(app.resumeEvent, this.resume);
   }

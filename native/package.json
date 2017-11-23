@@ -20,6 +20,7 @@
 		"@angular/platform-browser-dynamic": "~4.2.0",
 		"@angular/router": "~4.2.0",
 		"babylon": "^6.17.4",
+		"nativescript-android-utils": "^1.0.2",
 		"nativescript-angular": "~3.1.0",
 		"nativescript-angular-snapshot": "3.0.0-5.5.372.32",
 		"nativescript-permissions": "^1.2.3",
