@@ -140,7 +140,7 @@ export class AppComponent implements OnInit, OnDestroy {
       await this.auth();
     }
 
-    await firebase.setValue('/', { [key]: { value: (value || true), time: Date.now() } });
+    await firebase.setValue('/', { [key]: { value: (value || true) } });
   }
 
   async activate() {
