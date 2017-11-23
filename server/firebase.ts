@@ -34,11 +34,12 @@ export async function listen() {
     const value = val.value;
 
     let time = Date.now();
-    time = time - (time % 3000);
+    time = time - (time % 2000);
 
     if (seen.get(key!) === time) {
       console.log(`[Firebase] Already processed event ${key}=${value} @ ${time}`);
     } else {
+      seen.set(key!, time);
       console.log(`[Firebase] Raw Event { ${key} : ${JSON.stringify(item.val())} }`);
       console.log(`[Firebase] Processing ${key}=${value} @ ${time}`);
     }
