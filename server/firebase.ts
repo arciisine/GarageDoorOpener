@@ -28,13 +28,13 @@ export async function listen() {
       ref.child(key).remove();
     }
 
-    let val = Object.assign({ time: 0, value: undefined }, item.val());
+    let val = Object.assign({ value: undefined }, item.val());
 
     //Read action/query from event
     const value = val.value;
-    let time = (val.time || 0);
-    time = time - (time % 1000);
 
+    let time = Date.now();
+    time = time - (time % 2000);
 
     if (seen.get(key!) === time) {
       console.log(`[Firebase] Already processed event ${key}=${value} @ ${time}`);
