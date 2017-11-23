@@ -39,6 +39,8 @@ export class Garage {
 
     // Assume stable point after door opens/closes
     this.SNAPSHOT_TIMER = setTimeout(() => this.SNAPSHOT_TIMER = undefined, 20000);
+    //Start chain
+    this.exposeSnapshot();
 
     rpio.write(this.DOOR, rpio.HIGH);
     rpio.sleep(1)
@@ -171,8 +173,8 @@ export class Garage {
     } finally {
       Garage.SNAPSHOT_LOCK = false;
       if (Garage.SNAPHSHOT_PENDING || Garage.SNAPSHOT_TIMER !== undefined) {
-        Garage.SNAPHSHOT_PENDING = false;
         console.log('[Snapshot] Processing ' + (Garage.SNAPHSHOT_PENDING ? 'pending' : 'scheduled'));
+        Garage.SNAPHSHOT_PENDING = false;
         process.nextTick(() => Garage.exposeSnapshot()); // Handle stalled calls
       }
     }

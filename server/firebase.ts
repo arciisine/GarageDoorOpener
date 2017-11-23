@@ -20,25 +20,30 @@ export async function listen() {
       console.log('[Firebase] Received ' + (!item ? 'empty' : 'expired'));
       return;
     }
+
+    let key = item.key;
+
     //Consume message
-    if (item.key) {
-      ref.child(item.key).remove();
+    if (key) {
+      ref.child(key).remove();
     }
 
+    let val = Object.assign({ time: 0, value: undefined }, item.val());
+
     //Read action/query from event
-    const value = (item.val().value || '').toLowerCase();
-    let time = (item.val().time || 0);
+    const value = val.value;
+    let time = (val.time || 0);
     time = time - (time % 1000);
 
 
-    if (seen.get(item.key!) === time) {
-      console.log(`[Firebase] Already processed event ${item.key}=${value} @ ${time}`);
+    if (seen.get(key!) === time) {
+      console.log(`[Firebase] Already processed event ${key}=${value} @ ${time}`);
     } else {
-      console.log(`[Firebase] Raw Event { ${item.key} : ${JSON.stringify(item.val())} }`);
-      console.log(`[Firebase] Processing ${item.key}=${value} @ ${time}`);
+      console.log(`[Firebase] Raw Event { ${key} : ${JSON.stringify(item.val())} }`);
+      console.log(`[Firebase] Processing ${key}=${value} @ ${time}`);
     }
 
-    switch (item.key) {
+    switch (key) {
       case 'Activate':
         Garage.triggerDoor(value);
         break;
