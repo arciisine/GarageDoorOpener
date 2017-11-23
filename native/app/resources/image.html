@@ -23,41 +23,42 @@
 
 <body>
   <script>
-    let params = (window.location.search || '').replace(/^\?/, '')
-      .split('&')
+    let params = (window.location.search || '').replace(/^\?/, '').split('&')
       .map(x => x.split('=').map(decodeURIComponent))
-      .reduce((acc, [a, b]) => {
-        acc[a] = b;
-        return acc;
-      }, {});
+      .reduce((acc, [a, b]) => ((acc[a] = b) && false) || acc, {});
 
-    function reload(img, wait = 0, recurse = false) {
-      let src = img.src.replace(/=.+/, Date.now())
-      img.src = '';
-      setTimeout(() => {
-        img.src = src;
-        if (recurse && !!img.parentNode) {
-          reload(img, wait, recurse);
-        }
-      }, 100 + wait);
+    const PUBLIC_STREAM = 'https://storage.googleapis.com/' + params.appId + '/images/door-snap.jpg';
+    const PRIVATE_STREAM = 'http://' + params.ip + '/camera/stream';
+    let publicStreaming = true;
+
+    function publicStream() {
+      let img = document.createElement('img');
+      img.src = PUBLIC_STREAM + '?cache=' + Date.now();
+      img.id = 'public';
+
+      const old = document.getElementById('public');
+      document.body.insertBefore(img, document.body.childNodes[old ? 1 : 0]);
+
+      if (old) {
+        setTimeout(old.remove.bind(old), 1000);
+      }
+
+      img.addEventListener('load', () =>
+        publicStreaming ? setTimeout(publicStream, 2000) : img.remove()
+      );
     }
 
     let img = document.createElement('img');
-    img.src = 'https://storage.googleapis.com/' + params.appId + '/images/door-snap.jpg?cache=';
-    img.remove = img.remove.bind(img);
+    img.id = 'private';
+    img.src = PRIVATE_STREAM;
+    img.style.display = 'none';
+    img.addEventListener('load', () => {
+      publicStreaming = false;
+      img.style.display = 'inline-block';
+    });
     document.body.appendChild(img);
 
-    let img2 = document.createElement('img');
-    img2.src = 'http://' + params.ip + '/camera/stream';
-    img2.addEventListener('load', img.remove);
-    img2.addEventListener('error', function onError() {
-      img2.remove();
-      img2.removeEventListener('load', img.remove);
-      img2.removeEventListener('error', onError);
-    });
-    document.body.appendChild(img2);
-
-    reload(img, 2000, true);
+    publicStream();
   </script>
 </body>
 
