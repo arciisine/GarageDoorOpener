@@ -31,34 +31,33 @@
         return acc;
       }, {});
 
-    let img = document.createElement('img');
-    img.src = 'https://storage.googleapis.com/' + params.appId + '/images/door-snap.jpg?cache=' + Date.now();
-    document.body.appendChild(img);
-
-    function reload() {
+    function reload(img, wait = 0, recurse = false) {
       let src = img.src.replace(/=.+/, Date.now())
       img.src = '';
-      setTimeout(() => img.src = src, 0);
+      setTimeout(() => {
+        img.src = src;
+        if (recurse && !!img.parentNode) {
+          reload(img, wait, recurse);
+        }
+      }, 100 + wait);
     }
 
+    let img = document.createElement('img');
+    img.src = 'https://storage.googleapis.com/' + params.appId + '/images/door-snap.jpg?cache=';
     img.remove = img.remove.bind(img);
-    img.addEventListener('error', () => setTimeout(reload, 500));
+    document.body.appendChild(img);
 
     let img2 = document.createElement('img');
-    let imgTimer;
-
-    img2.addEventListener('error', () => {
-      img2.removeEventListener('load', () => img.remove());
-      img2.remove();
-      if (imgTimer) {
-        clearInterval(imgTimer);
-      }
-      imgTimer = setInterval(reload, 2000);
-    });
-    img2.addEventListener('load', img.remove);
-
     img2.src = 'http://' + params.ip + '/camera/stream';
+    img2.addEventListener('load', img.remove);
+    img2.addEventListener('error', function onError() {
+      img2.remove();
+      img2.removeEventListener('load', img.remove);
+      img2.removeEventListener('error', onError);
+    });
     document.body.appendChild(img2);
+
+    reload(img, 2000, true);
   </script>
 </body>
 
