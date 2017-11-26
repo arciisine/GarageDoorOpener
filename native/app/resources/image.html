@@ -39,24 +39,16 @@
       const old = document.getElementById('public');
       document.body.insertBefore(img, document.body.childNodes[old ? 1 : 0]);
 
-      if (old) {
-        setTimeout(old.remove.bind(old), 1000);
-      }
+      let recurse = () => setTimeout(publicStream, 2000);
 
-      img.addEventListener('load', () =>
-        publicStreaming ? setTimeout(publicStream, 2000) : img.remove()
-      );
+      img.addEventListener('load', () => {
+        recurse();
+        if (old) {
+          setTimeout(() => old.remove(), 1);
+        }
+      });
+      img.addEventListener('error', recurse);
     }
-
-    let img = document.createElement('img');
-    img.id = 'private';
-    img.src = PRIVATE_STREAM;
-    img.style.display = 'none';
-    img.addEventListener('load', () => {
-      publicStreaming = false;
-      img.style.display = 'inline-block';
-    });
-    document.body.appendChild(img);
 
     publicStream();
   </script>

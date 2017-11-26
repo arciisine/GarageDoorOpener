@@ -22,15 +22,11 @@ app.post('/activate', async (req, res, next) => {
   res.json({ status: 'active' });
 });
 
-app.get('/camera/stream', async (req, res, next) => {
+app.get('/camera', async (req, res, next) => {
   await Garage.camera(res);
 });
 
-app.get('/camera/snapshot', async (req, res, next) => {
-  await Garage.camera(res, 'snapshot');
-});
-
-app.post('/camera/exposeSnapshot', async (req, res, next) => {
+app.post('/camera/expose', async (req, res, next) => {
   try {
     let url = await Garage.exposeSnapshot();
     res.json({ url });

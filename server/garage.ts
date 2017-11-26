@@ -1,30 +1,25 @@
 import * as http from 'http';
 import * as express from 'express';
-import * as proc from 'child_process';
 import * as rpio from 'rpio';
 import { config } from './firebase';
 import Storage = require('@google-cloud/storage');
+import { Raspistill } from 'node-raspistill';
 
 export class Garage {
 
-  static DOOR = 18
+  static DOOR_GPIO = 18
   static SNAPSHOT_TIMER: any;
   static SNAPSHOT_LOCK: boolean = false;
-  static PATH = 'images/door-snap.jpg';
-  static SNAPSHOT_URL = `https://storage.googleapis.com/${config.projectId}/${Garage.PATH}`
+  static SNAPSHOT_PATH = 'images/door-snap.jpg';
+  static SNAPSHOT_URL = `https://storage.googleapis.com/${config.projectId}/${Garage.SNAPSHOT_PATH}`
   static SNAPHSHOT_PENDING = false;
-
-  static killTimeout: NodeJS.Timer;
-  static listening = 0;
-  static cameraProc?: proc.ChildProcess = undefined;
-  static cameraOptions = {
-    x: 640,
-    y: 480,
-    fps: 15
-  }
+  static SNAPSHOTTER = new Raspistill({
+    width: 640,
+    height: 480
+  });
 
   static init() {
-    rpio.open(this.DOOR, rpio.OUTPUT);
+    rpio.open(this.DOOR_GPIO, rpio.OUTPUT);
     process.on('exit', () => Garage.cleanup());
     process.on('SIGINT', () => Garage.cleanup());
     process.on('uncaughtException', () => Garage.cleanup());
@@ -42,89 +37,25 @@ export class Garage {
     //Start chain
     this.exposeSnapshot();
 
-    rpio.write(this.DOOR, rpio.HIGH);
+    rpio.write(this.DOOR_GPIO, rpio.HIGH);
     rpio.sleep(1)
-    rpio.write(this.DOOR, rpio.LOW);
+    rpio.write(this.DOOR_GPIO, rpio.LOW);
   }
 
   static cleanup() {
-    if (this.cameraProc) {
-      console.log('[Camera] Cleanup');
-      try {
-        this.cameraProc.kill();
-      } catch (e) {
-        //Do nothing
-      }
-    }
     process.exit();
   }
 
-  static async startCamera() {
-    console.log("[Camera] Starting", this.listening);
-    clearTimeout(this.killTimeout);
-    if (!this.cameraProc) {
-      let args = ['-o', 'output_http.so -w ./www', '-i', 'input_raspicam.so ' + Object.keys(Garage.cameraOptions)
-        .map(x => `-${x} ${(Garage.cameraOptions as any)[x]}`).join(' ')];
-      let env = {
-        LD_LIBRARY_PATH: process.cwd(),
-        ...process.env
-      };
-
-      this.cameraProc = proc.spawn('mjpg_streamer', args, {
-        env,
-        cwd: process.cwd(),
-        stdio: ['ignore', process.env.DEBUG ? process.stdout : 'ignore', process.env.DEBUG ? process.stderr : 'ignore']
+  static async camera(response: NodeJS.WritableStream) {
+    console.log("[Camera] Snapshot");
+    let buffer = await Garage.SNAPSHOTTER.takePhoto();
+    if ('writeHead' in response) {
+      (response as express.Response).writeHead(200, {
+        'Content-Type': 'image/jpeg'
       });
-
-      await new Promise(resolve => setTimeout(resolve, 2000));
     }
-  }
-
-  static async stopCamera() {
-    console.log("[Camera] Stopping", this.listening);
-    if (this.listening === 0 && this.cameraProc) {
-      try {
-        this.cameraProc.kill('SIGINT');
-      } catch (e) {
-        console.log("[Camera] Cannot kill", e.message);
-      }
-      delete this.cameraProc;
-    }
-  }
-
-  static async camera(response: NodeJS.WritableStream, action: 'stream' | 'snapshot' = 'stream') {
-    let closed = false, close = (type: string, key: string) => {
-      console.log("[Camera] Closing", type, key);
-      if (closed) {
-        return;
-      }
-      this.listening--;
-      closed = true;
-      console.log("[Camera] Request End", this.listening);
-      this.killTimeout = setTimeout(() => this.stopCamera(), 1000 * 30);
-    };
-
-    this.listening++;
-    console.log("[Camera] Request Start", this.listening);
-    await this.startCamera();
-
-    let req = http.request({
-      port: 8080,
-      host: 'localhost',
-      path: `/?action=${action}`
-    }, (res) => {
-      if ('writeHead' in response) {
-        (response as express.Response).writeHead(res.statusCode || 200, res.headers);
-      }
-      return res.pipe(response, { end: true });
-    });
-
-    response.on('close', (x: any) => close('close', x));
-    req.on('error', (x: any) => close('error', x));
-    response.on('error', (x: any) => close('error', x));
-    response.on('finish', (x: any) => close('finish', x));
-
-    req.end();
+    response.write(buffer);
+    response.end();
   }
 
   static async exposeSnapshot() {
@@ -142,7 +73,7 @@ export class Garage {
 
     let bucket = await st.bucket(config.storageBucket.split('gs://')[1]);
 
-    let file = bucket.file(`/${Garage.PATH}`);
+    let file = bucket.file(`/${Garage.SNAPSHOT_PATH}`);
 
     const stream = file.createWriteStream({
       metadata: {
@@ -159,7 +90,7 @@ export class Garage {
             .then(resolve, reject);
         });
         try {
-          Garage.camera(stream, 'snapshot');
+          Garage.camera(stream);
         } catch (e) {
           reject(e);
         }

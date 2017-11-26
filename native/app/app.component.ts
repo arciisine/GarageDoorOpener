@@ -55,7 +55,6 @@ export class AppComponent implements OnInit, OnDestroy {
 
   async ngOnInit() {
     console.log('Initted');
-    firebase.init();
     app.on(app.suspendEvent, this.suspend);
     app.on(app.resumeEvent, this.resume);
     app.on(app.exitEvent, this.ngOnDestroy.bind(this));
@@ -126,7 +125,9 @@ export class AppComponent implements OnInit, OnDestroy {
   async startCamera() {
     if (this._webView && this.webViewElement.android) {
       this.webViewElement.android.getSettings().setJavaScriptEnabled(true);
-      this.webViewElement.src = this.url + '&nonce=' + Date.now();
+      if (!(this.webViewElement.src || '').startsWith(this.url)) {
+        this.webViewElement.src = this.url + '&nonce=' + Date.now();
+      }
     } else {
       setTimeout(this.startCamera, 10);
     }
@@ -168,3 +169,5 @@ export class AppComponent implements OnInit, OnDestroy {
     }
   }
 }
+
+firebase.init();
