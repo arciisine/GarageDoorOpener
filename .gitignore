@@ -4,3 +4,5 @@ node_modules/
 native/hooks/
 cert/**
 native/app/**/*.js
+firebase-config.json
+google-services.json

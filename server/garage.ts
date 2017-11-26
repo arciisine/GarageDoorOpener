@@ -1,9 +1,15 @@
 import * as http from 'http';
 import * as express from 'express';
-import * as rpio from 'rpio';
 import { config } from './firebase';
 import Storage = require('@google-cloud/storage');
-import { Raspistill } from 'node-raspistill';
+const cv = require('opencv');
+let rpio: Rpio;
+
+try {
+  rpio = require('rpio');
+} catch (e) {
+
+}
 
 export class Garage {
 
@@ -13,16 +19,38 @@ export class Garage {
   static SNAPSHOT_PATH = 'images/door-snap.jpg';
   static SNAPSHOT_URL = `https://storage.googleapis.com/${config.projectId}/${Garage.SNAPSHOT_PATH}`
   static SNAPHSHOT_PENDING = false;
-  static SNAPSHOTTER = new Raspistill({
-    width: 640,
-    height: 480
-  });
+  static CAMERA = new cv.VideoCapture(0);
+  static CAMERA_TIME = 0;
+  static CAMERA_TRACK: any;
+
 
   static init() {
-    rpio.open(this.DOOR_GPIO, rpio.OUTPUT);
+    if (rpio) {
+      rpio.open(this.DOOR_GPIO, rpio.OUTPUT);
+    }
     process.on('exit', () => Garage.cleanup());
     process.on('SIGINT', () => Garage.cleanup());
     process.on('uncaughtException', () => Garage.cleanup());
+    Garage.CAMERA.read((err: any, mat: any) => {
+      if (err) {
+        process.exit(1);
+      }
+      Garage.CAMERA_TRACK = new cv.TrackedObject(mat, [420, 110, 490, 170], { channel: 'value' })
+    });
+    Garage.track();
+  }
+
+  static track() {
+    Garage.CAMERA.read((err: any, m: any) => {
+      Garage.CAMERA_TIME++;
+      const rec = Garage.CAMERA_TRACK.track(m);
+      if (Garage.CAMERA_TIME % 10 == 0) {
+        console.log([rec[0], rec[1]], [rec[2], rec[3]]);
+        //m.rectangle([rec[0], rec[1]], [rec[2], rec[3]])
+        // m2.save('./out-motiontrack-' + x + '.jpg')
+      }
+      setImmediate(Garage.track);
+    });
   }
 
   static async triggerDoor(action?: string) {
@@ -37,9 +65,11 @@ export class Garage {
     //Start chain
     this.exposeSnapshot();
 
-    rpio.write(this.DOOR_GPIO, rpio.HIGH);
-    rpio.sleep(1)
-    rpio.write(this.DOOR_GPIO, rpio.LOW);
+    if (rpio) {
+      rpio.write(this.DOOR_GPIO, rpio.HIGH);
+      rpio.sleep(1)
+      rpio.write(this.DOOR_GPIO, rpio.LOW);
+    }
   }
 
   static cleanup() {
@@ -48,13 +78,13 @@ export class Garage {
 
   static async camera(response: NodeJS.WritableStream) {
     console.log("[Camera] Snapshot");
-    let buffer = await Garage.SNAPSHOTTER.takePhoto();
+    //let buffer = await Garage.SNAPSHOTTER.takePhoto();
     if ('writeHead' in response) {
       (response as express.Response).writeHead(200, {
         'Content-Type': 'image/jpeg'
       });
     }
-    response.write(buffer);
+    //response.write(buffer);
     response.end();
   }
 
