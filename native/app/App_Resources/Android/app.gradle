@@ -5,11 +5,15 @@
 //	compile 'com.android.support:recyclerview-v7:+'
 //}
 
+dependencies {
+   compile 'com.google.android.gms:play-services:11.2.2'
+}
+
 android {  
   defaultConfig {  
     generatedDensities = []
     applicationId = "org.arcsine.GarageDoor" 
-    
+    multiDexEnabled = true    
     //override supported platforms
     // ndk {
     //       abiFilters.clear()

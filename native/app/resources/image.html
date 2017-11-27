@@ -11,29 +11,20 @@
       height: 100%;
       position: fixed;
       overflow: hidden;
-      text-align: center;
       background: black;
     }
 
     img {
-      height: 100%;
+      width: 100%;
     }
   </style>
 </head>
 
 <body>
   <script>
-    let params = (window.location.search || '').replace(/^\?/, '').split('&')
-      .map(x => x.split('=').map(decodeURIComponent))
-      .reduce((acc, [a, b]) => ((acc[a] = b) && false) || acc, {});
-
-    const PUBLIC_STREAM = 'https://storage.googleapis.com/' + params.appId + '/images/door-snap.jpg';
-    const PRIVATE_STREAM = 'http://' + params.ip + '/camera/stream';
-    let publicStreaming = true;
-
     function publicStream() {
       let img = document.createElement('img');
-      img.src = PUBLIC_STREAM + '?cache=' + Date.now();
+      img.src = 'https://storage.googleapis.com/{appId}/images/door-snap.jpg?cache=' + Date.now();
       img.id = 'public';
 
       const old = document.getElementById('public');

@@ -12,7 +12,7 @@ if ((<any>global).__snapshot || (<any>global).__snapshotEnabled) {
 }
 
 @JavaProxy('org.arcsine.MainActivity')
-export class Activity extends android.app.Activity {
+export class MainActivity extends android.app.Activity {
 
   private _callbacks: AndroidActivityCallbacks;
 
