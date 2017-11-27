@@ -2,11 +2,13 @@
 
 import { Component, ViewChild, ElementRef, OnDestroy, OnInit } from "@angular/core";
 import { WebView, LoadEventData } from "ui/web-view";
+import { Image } from "ui/image";
 import { Page } from "ui/page";
 import * as platformModule from "tns-core-modules/platform";
 import * as connectivity from "tns-core-modules/connectivity";
 import * as http from 'http';
 import * as app from "application";
+import * as im from 'image-source';
 import firebase = require("nativescript-plugin-firebase");
 import * as Permissions from 'nativescript-permissions';
 import { Telephony } from 'nativescript-telephony';
@@ -16,27 +18,15 @@ import { SETTINGS } from './main-activity';
 @Component({
     selector: "ns-app",
     template: `
-    <FlexboxLayout flexDirection="row">
-        <Button class="action" text="Go" (tap)="activate()"></Button>    
-        <WebView #image flexGrow="1"></WebView>
+    <FlexboxLayout flexDirection="row" alignContent="center">
+        <Image #image (longPress)="activate()" stretch="aspectFill"></Image>
     </FlexboxLayout>
   `,
-    styles: [`
-
-    .main {
-      color: darkgreen;
-      background-color: #ddd;  
-    }
-
-    .action {
-      font-size: 20pt;
-      width: 300;
-    }
-  `]
+    styles: [``]
 })
 export class AppComponent implements OnInit, OnDestroy {
 
-    @ViewChild("image") _webView: ElementRef;
+    @ViewChild("image") image: ElementRef;
 
     private ip = '192.168.1.168';
     private appId = 'garagedoorapp-1d1fe.appspot.com';
@@ -47,11 +37,10 @@ export class AppComponent implements OnInit, OnDestroy {
 
     private authPerm: Promise<any>;
 
-    constructor(_page: Page) {
+    constructor(private _page: Page) {
         this.resume = this.resume.bind(this);
-        this.startCamera = this.startCamera.bind(this);
+        this.loadSnapshot = this.loadSnapshot.bind(this);
         _page.actionBarHidden = true;
-
     }
 
     async ngOnInit() {
@@ -63,7 +52,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
     async resume() {
         console.log('Resumed');
-        this.startCamera()
+        this.loadSnapshot()
 
         if (SETTINGS.voice) {
             SETTINGS.voice = false;
@@ -114,17 +103,13 @@ export class AppComponent implements OnInit, OnDestroy {
         app.off(app.resumeEvent, this.resume);
     }
 
-    async startCamera() {
-        if (this._webView && this.webViewElement.android) {
-            this.webViewElement.android.getSettings().setJavaScriptEnabled(true);
-            this.webViewElement.src = this.content.replace(/\{appId\}/g, this.appId);
-        } else {
-            setTimeout(this.startCamera, 10);
-        }
-    }
-
-    get webViewElement() {
-        return this._webView.nativeElement as WebView;
+    async loadSnapshot() {
+        console.log('Loading Image');
+        let src = await im.fromUrl(`https://storage.googleapis.com/${this.appId}/images/door-snap.jpg?cache=${Date.now()}`);
+        console.log('Loaded Image');
+        let img = (this.image.nativeElement as Image);
+        img.imageSource = src;
+        setTimeout(this.loadSnapshot, 2000);
     }
 
     async sendMessage(key: string, value?: any) {
@@ -138,7 +123,7 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     async activate() {
-        if (Date.now() < (this.lastSent + 2000)) { // Don't double tap
+        if (Date.now() < (this.lastSent + 1000)) { // Don't double tap
             return;
         }
         try {
