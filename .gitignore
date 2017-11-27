@@ -4,5 +4,6 @@ node_modules/
 native/hooks/
 cert/**
 native/app/**/*.js
-firebase-config.json
+firebase-config.js
 google-services.json
+native/report/
