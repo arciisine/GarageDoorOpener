@@ -24,7 +24,7 @@
     "nativescript-android-utils": "^1.0.2",
     "nativescript-angular": "~3.1.0",
     "nativescript-permissions": "^1.2.3",
-    "nativescript-plugin-firebase": "^4.0.0",
+    "nativescript-plugin-firebase": "^4.2.1",
     "nativescript-telephony": "^1.0.4",
     "nativescript-theme-core": "~1.0.4",
     "reflect-metadata": "~0.1.8",

@@ -69,7 +69,6 @@ export class AppComponent implements OnInit, OnDestroy {
   async resume() {
     console.log('Resumed');
     this.startCamera()
-    this.snapshot();
 
     if (SETTINGS.voice) {
       SETTINGS.voice = false;
@@ -137,10 +136,6 @@ export class AppComponent implements OnInit, OnDestroy {
     if (this._webView) {
       this.webViewElement.src = '';
     }
-  }
-
-  async snapshot() {
-    await this.sendMessage('Snapshot');
   }
 
   get webViewElement() {
