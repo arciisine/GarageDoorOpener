@@ -2,6 +2,7 @@
 
 import { Component, ViewChild, ElementRef, OnDestroy, OnInit } from "@angular/core";
 import { WebView, LoadEventData } from "ui/web-view";
+import { Page } from "ui/page";
 import * as platformModule from "tns-core-modules/platform";
 import * as connectivity from "tns-core-modules/connectivity";
 import * as http from 'http';
@@ -15,9 +16,9 @@ import { SETTINGS } from './main-activity';
 @Component({
     selector: "ns-app",
     template: `
-    <FlexboxLayout flexDirection="column">
-      <WebView #image flexGrow="1"></WebView>     
-      <Button class="action" text="Activate" (tap)="activate()"></Button>
+    <FlexboxLayout flexDirection="row">
+        <Button class="action" text="Go" (tap)="activate()"></Button>    
+        <WebView #image flexGrow="1"></WebView>
     </FlexboxLayout>
   `,
     styles: [`
@@ -29,7 +30,7 @@ import { SETTINGS } from './main-activity';
 
     .action {
       font-size: 20pt;
-      height: 100;
+      width: 300;
     }
   `]
 })
@@ -46,9 +47,10 @@ export class AppComponent implements OnInit, OnDestroy {
 
     private authPerm: Promise<any>;
 
-    constructor() {
+    constructor(_page: Page) {
         this.resume = this.resume.bind(this);
         this.startCamera = this.startCamera.bind(this);
+        _page.actionBarHidden = true;
 
     }
 
@@ -87,7 +89,7 @@ export class AppComponent implements OnInit, OnDestroy {
         app.android.foregroundActivity.startActivityForResult(intent, 1);
 
         let u = await new Promise((resolve, reject) => {
-            app.android.on(app.AndroidApplication.activityResultEvent, function(args: app.AndroidActivityResultEventData) {
+            app.android.on(app.AndroidApplication.activityResultEvent, function (args: app.AndroidActivityResultEventData) {
                 if (args.requestCode === 1) {
                     let all = android.accounts.AccountManager.get(app.android.currentContext).getAccounts();
                     let primary = all[0];
