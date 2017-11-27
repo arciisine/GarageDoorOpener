@@ -1,8 +1,9 @@
 import * as http from 'http';
 import * as express from 'express';
+import * as fs from 'fs';
 import { config } from './firebase';
 import Storage = require('@google-cloud/storage');
-const cv = require('opencv');
+
 let rpio: Rpio;
 
 try {
@@ -14,61 +15,26 @@ try {
 export class Garage {
 
   static DOOR_GPIO = 18
-  static SNAPSHOT_TIMER: any;
-  static SNAPSHOT_LOCK: boolean = false;
+  static SNAPSHOT_LOCK = false;
   static SNAPSHOT_PATH = 'images/door-snap.jpg';
   static SNAPSHOT_URL = `https://storage.googleapis.com/${config.projectId}/${Garage.SNAPSHOT_PATH}`
-  static SNAPHSHOT_PENDING = false;
-  static CAMERA = new cv.VideoCapture(0);
-  static CAMERA_TIME = 0;
-  static CAMERA_TRACK: any;
-
 
   static init() {
     if (rpio) {
-      rpio.open(this.DOOR_GPIO, rpio.OUTPUT);
+      rpio.open(Garage.DOOR_GPIO, rpio.OUTPUT);
     }
     process.on('exit', () => Garage.cleanup());
     process.on('SIGINT', () => Garage.cleanup());
     process.on('uncaughtException', () => Garage.cleanup());
-    Garage.CAMERA.read((err: any, mat: any) => {
-      if (err) {
-        process.exit(1);
-      }
-      Garage.CAMERA_TRACK = new cv.TrackedObject(mat, [420, 110, 490, 170], { channel: 'value' })
-    });
-    Garage.track();
-  }
-
-  static track() {
-    Garage.CAMERA.read((err: any, m: any) => {
-      Garage.CAMERA_TIME++;
-      const rec = Garage.CAMERA_TRACK.track(m);
-      if (Garage.CAMERA_TIME % 10 == 0) {
-        console.log([rec[0], rec[1]], [rec[2], rec[3]]);
-        //m.rectangle([rec[0], rec[1]], [rec[2], rec[3]])
-        // m2.save('./out-motiontrack-' + x + '.jpg')
-      }
-      setImmediate(Garage.track);
-    });
   }
 
   static async triggerDoor(action?: string) {
     console.log('[Door] Triggering', action);
 
-    if (this.SNAPSHOT_TIMER) {
-      clearTimeout(this.SNAPSHOT_TIMER);
-    }
-
-    // Assume stable point after door opens/closes
-    this.SNAPSHOT_TIMER = setTimeout(() => this.SNAPSHOT_TIMER = undefined, 20000);
-    //Start chain
-    this.exposeSnapshot();
-
     if (rpio) {
-      rpio.write(this.DOOR_GPIO, rpio.HIGH);
+      rpio.write(Garage.DOOR_GPIO, rpio.HIGH);
       rpio.sleep(1)
-      rpio.write(this.DOOR_GPIO, rpio.LOW);
+      rpio.write(Garage.DOOR_GPIO, rpio.LOW);
     }
   }
 
@@ -76,26 +42,13 @@ export class Garage {
     process.exit();
   }
 
-  static async camera(response: NodeJS.WritableStream) {
-    console.log("[Camera] Snapshot");
-    //let buffer = await Garage.SNAPSHOTTER.takePhoto();
-    if ('writeHead' in response) {
-      (response as express.Response).writeHead(200, {
-        'Content-Type': 'image/jpeg'
-      });
-    }
-    //response.write(buffer);
-    response.end();
-  }
-
-  static async exposeSnapshot() {
+  static async snapshot(path: string) {
     if (Garage.SNAPSHOT_LOCK) {
-      console.log('[Snapshot] Queued');
-      Garage.SNAPHSHOT_PENDING = true;
+      console.log('[Snapshot] Skipped');
       return Garage.SNAPSHOT_URL;
     }
     Garage.SNAPSHOT_LOCK = true;
-    console.log('[Snapshot] Starting');
+    console.log('[Snapshot] Starting ' + path);
 
     const st = Storage({
       keyFilename: '../google-services.json'
@@ -106,6 +59,8 @@ export class Garage {
     let file = bucket.file(`/${Garage.SNAPSHOT_PATH}`);
 
     const stream = file.createWriteStream({
+      validation: 'md5',
+      resumable: false,
       metadata: {
         contentType: 'image/jpeg'
       }
@@ -120,24 +75,19 @@ export class Garage {
             .then(resolve, reject);
         });
         try {
-          Garage.camera(stream);
+          fs.createReadStream(path).pipe(stream).on('error', reject);
         } catch (e) {
           reject(e);
         }
       });
 
-      console.log('[Snapshot] Success');
+      console.log('[Snapshot] Success ' + JSON.stringify(res));
 
       return res;
     } catch (e) {
-      console.log('[Snapshot] Failed');
+      console.log('[Snapshot] Failed', e);
     } finally {
       Garage.SNAPSHOT_LOCK = false;
-      if (Garage.SNAPHSHOT_PENDING || Garage.SNAPSHOT_TIMER !== undefined) {
-        console.log('[Snapshot] Processing ' + (Garage.SNAPHSHOT_PENDING ? 'pending' : 'scheduled'));
-        Garage.SNAPHSHOT_PENDING = false;
-        setTimeout(() => Garage.exposeSnapshot(), Garage.SNAPSHOT_TIMER === undefined ? 0 : 2000); // Handle stalled calls
-      }
     }
   }
 }

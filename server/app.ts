@@ -4,16 +4,9 @@ import * as express from 'express';
 import { Garage } from './garage';
 import { listen } from './firebase';
 
-
-let privateKey = fs.readFileSync('../cert/key.pem', 'utf-8')
-let certificate = fs.readFileSync('../cert/cert.pem', 'utf-8')
-
-let credentials = {
-  key: privateKey,
-  cert: certificate
-};
-
 Garage.init();
+//Listen for firebase
+listen();
 
 const app = express();
 
@@ -22,26 +15,33 @@ app.post('/activate', async (req, res, next) => {
   res.json({ status: 'active' });
 });
 
-app.get('/camera', async (req, res, next) => {
-  await Garage.camera(res);
-});
-
-app.post('/camera/expose', async (req, res, next) => {
+app.post('/snapshot', async (req, res, next) => {
   try {
-    let url = await Garage.exposeSnapshot();
+    let url = await Garage.snapshot(req.query.img);
     res.json({ url });
   } catch (e) {
     res.status(500).json(e)
   }
 });
 
+try {
+  let privateKey = fs.readFileSync('../cert/key.pem', 'utf-8');
+  let certificate = fs.readFileSync('../cert/cert.pem', 'utf-8')
 
-//Listen for firebase
-listen();
+  let credentials = {
+    key: privateKey,
+    cert: certificate
+  };
 
-https.createServer(credentials, app)
-  .listen(443);
+  https.createServer(credentials, app)
+    .listen(443);
+
+} catch (e) { }
+
+app
+  .listen(9000, () => {
+    console.log('[Express] Listening', 9000);
+  })
 
 app
   .listen(80);
-

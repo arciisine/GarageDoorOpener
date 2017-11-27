@@ -51,7 +51,6 @@ export async function listen() {
 
     switch (key) {
       case 'Activate': Garage.triggerDoor(value); break;
-      case 'Snapshot': Garage.exposeSnapshot(); break;
     }
   });
 }
