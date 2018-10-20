@@ -18,13 +18,16 @@ import { SETTINGS } from './main-activity';
 @Component({
   selector: "ns-app",
   template: `
-    <FlexboxLayout flexDirection="row" alignContent="center">
-        <Image [imageSource]="imageSource" (longPress)="activate()" stretch="aspectFill"></Image>
+    <FlexboxLayout flexDirection="row" alignContent="center" (longPress)="activate()">
+        <Image #image stretch="aspectFill" ></Image>
     </FlexboxLayout>
   `,
   styles: [``]
 })
 export class AppComponent implements OnInit, OnDestroy {
+
+  @ViewChild('image')
+  private _image: ElementRef;
 
   private ip = '192.168.1.168';
   private appId = 'garagedoorapp-1d1fe.appspot.com';
@@ -32,9 +35,8 @@ export class AppComponent implements OnInit, OnDestroy {
   private user: any;
   private lastSent = 0;
 
-  private imageSource: im.ImageSource;
   private authPerm: Promise<any>;
-  private imageLoading: Promise<any>;
+  private imageLoading: boolean;
 
   constructor(private _page: Page) {
     this.resume = this.resume.bind(this);
@@ -99,21 +101,28 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    this.imageLoading = false;
     app.off(app.resumeEvent, this.resume);
   }
 
   async loadSnapshot() {
-    if (!this.imageLoading) {
-      this.imageLoading = this._loadSnapshot();
+    if (this.imageLoading) {
+      return;
     }
-    return this.imageLoading;
-  }
 
-  async _loadSnapshot() {
-    while (true) {
+    this.imageLoading = true;
+
+    while (this.imageLoading) {
       console.log('Loading Image');
-      this.imageSource = await im.fromUrl(`https://storage.googleapis.com/${this.appId}/images/door-snap.jpg?cache=${Date.now()}`);
-      console.log('Loaded Image');
+      let image = this._image.nativeElement as Image;
+      try {
+        let src = await im.fromUrl(`https://storage.googleapis.com/${this.appId}/images/door-snap.jpg?cache=${Date.now()}`);
+        image.imageSource = src;
+        console.log('Loaded Image');
+      } catch (e) {
+        console.log('Loading Image Failed');
+        console.log(e);
+      }
       await new Promise(resolve => setTimeout(resolve, 2000));
     }
   }

@@ -7,3 +7,4 @@ native/app/**/*.js
 firebase-config.js
 google-services.json
 native/report/
+native-bk/
