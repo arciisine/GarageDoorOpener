@@ -141,10 +141,7 @@ class _GarageInterfaceState extends State<GarageInterface> {
       await this.auth();
     }
 
-    FirebaseDatabase.instance
-        .reference()
-        .child('/${key}')
-        .set(value == null ? 'true' : value);
+    FirebaseDatabase.instance.reference().child('/${key}').set(value);
     this.lastSent = DateTime.now().millisecondsSinceEpoch;
   }
 
@@ -154,7 +151,8 @@ class _GarageInterfaceState extends State<GarageInterface> {
       return;
     }
     try {
-      await this.sendMessage('Activate', null);
+      await this
+          .sendMessage('Activate', '${DateTime.now().millisecondsSinceEpoch}');
     } catch (e) {
       // fallback if firebase is down
       await http.post('http://${ip}/activate');
