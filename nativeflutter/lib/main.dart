@@ -89,6 +89,7 @@ class _GarageInterfaceState extends State<GarageInterface>
 
   final GoogleSignIn _googleSignIn = GoogleSignIn();
   final FirebaseAuth _firebaseauth = FirebaseAuth.instance;
+  SnackBar snackbar;
   FirebaseUser user;
   Timer _timer;
   Future<void> authFuture;
@@ -200,6 +201,9 @@ class _GarageInterfaceState extends State<GarageInterface>
   @override
   Widget build(BuildContext context) {
     runSnapshot();
+    this.snackbar =
+        SnackBar(content: Text('Request sent'), duration: Duration(seconds: 2));
+
     // This method is rerun every time setState is called, for instance as done
     // by the _incrementCounter method above.
     //
@@ -217,7 +221,10 @@ class _GarageInterfaceState extends State<GarageInterface>
       ),
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.directions_run),
-        onPressed: activate,
+        onPressed: () {
+          activate();
+          Scaffold.of(context).showSnackBar(snackbar);
+        },
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }

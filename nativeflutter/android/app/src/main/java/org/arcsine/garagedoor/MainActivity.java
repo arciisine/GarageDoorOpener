@@ -30,6 +30,8 @@ public class MainActivity extends FlutterActivity {
     super.onCreate(savedInstanceState);
     GeneratedPluginRegistrant.registerWith(this);
 
+    computeIntent();
+
     new MethodChannel(getFlutterView(), "app.channel.shared.intent").setMethodCallHandler(new MethodCallHandler() {
       @Override
       public void onMethodCall(MethodCall call, MethodChannel.Result result) {
@@ -43,6 +45,10 @@ public class MainActivity extends FlutterActivity {
 
   @Override
   protected void onResume() {
-    computeIntent();
+    try {
+      computeIntent();
+    } catch (Exception e) {
+      voice = false;
+    }
   }
 }
