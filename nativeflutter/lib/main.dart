@@ -6,6 +6,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'dart:async';
 
 void main() async {
   final fbapp = await FirebaseApp.configure(
@@ -69,9 +70,11 @@ class GarageInterface extends StatefulWidget {
   _GarageInterfaceState createState() => _GarageInterfaceState();
 }
 
-class _GarageInterfaceState extends State<GarageInterface> {
+class _GarageInterfaceState extends State<GarageInterface>
+    with WidgetsBindingObserver {
   static String ip = '192.168.1.168';
   static String appId = 'garagedoorapp-1d1fe.appspot.com';
+  static const platform = const MethodChannel('app.channel.shared.intent');
 
   static getImageUrl() {
     final now = new DateTime.now().millisecondsSinceEpoch;
@@ -82,31 +85,54 @@ class _GarageInterfaceState extends State<GarageInterface> {
   }
 
   int lastSent = 0;
+  String imageUrl = getImageUrl();
+
   final GoogleSignIn _googleSignIn = GoogleSignIn();
   final FirebaseAuth _firebaseauth = FirebaseAuth.instance;
-  static const platform = const MethodChannel('app.channel.shared.intent');
-  String imageUrl = getImageUrl();
   FirebaseUser user;
-
+  Timer _timer;
   Future<void> authFuture;
-  bool imageLoading = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     checkIntent();
   }
 
   @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    setState(() {
-      if (state == AppLifecycleState.resumed) {
-        checkIntent();
-        loadSnapshot();
-      } else {
-        this.imageLoading = false;
-      }
-    });
+    print('Did CHange App Lifecycle State ${state}\n');
+    if (state == AppLifecycleState.resumed) {
+      checkIntent();
+      runSnapshot();
+    } else {
+      stopSnapshot();
+    }
+  }
+
+  stopSnapshot() {
+    if (_timer != null) {
+      var old = _timer;
+      _timer = null;
+      old.cancel();
+    }
+  }
+
+  runSnapshot() {
+    if (_timer == null) {
+      _timer = Timer.periodic(Duration(seconds: 2), (timer) {
+        setState(() {
+          imageUrl = getImageUrl();
+        });
+      });
+    }
   }
 
   checkIntent() async {
@@ -145,22 +171,6 @@ class _GarageInterfaceState extends State<GarageInterface> {
     print("signed in " + user.email + " " + deviceId);
   }
 
-  loadSnapshot() async {
-    if (this.imageLoading) {
-      return;
-    }
-
-    this.imageLoading = true;
-
-    while (this.imageLoading) {
-      print('Loading Image');
-      setState(() {
-        imageUrl = getImageUrl();
-      });
-      await Future.delayed(const Duration(milliseconds: 2000));
-    }
-  }
-
   sendMessage(String key, String value) async {
     try {
       await FirebaseAuth.instance.currentUser();
@@ -189,8 +199,7 @@ class _GarageInterfaceState extends State<GarageInterface> {
 
   @override
   Widget build(BuildContext context) {
-    loadSnapshot();
-
+    runSnapshot();
     // This method is rerun every time setState is called, for instance as done
     // by the _incrementCounter method above.
     //

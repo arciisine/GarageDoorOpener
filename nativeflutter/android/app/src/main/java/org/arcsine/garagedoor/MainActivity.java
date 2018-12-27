@@ -13,11 +13,7 @@ public class MainActivity extends FlutterActivity {
 
   boolean voice = false;
 
-  @Override
-  protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    GeneratedPluginRegistrant.registerWith(this);
-
+  void computeIntent() {
     Intent intent = getIntent();
     int flags = intent.getFlags();
     String pkg = intent.getPackage();
@@ -27,6 +23,12 @@ public class MainActivity extends FlutterActivity {
     } else {
       voice = false;
     }
+  }
+
+  @Override
+  protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    GeneratedPluginRegistrant.registerWith(this);
 
     new MethodChannel(getFlutterView(), "app.channel.shared.intent").setMethodCallHandler(new MethodCallHandler() {
       @Override
@@ -37,5 +39,10 @@ public class MainActivity extends FlutterActivity {
         }
       }
     });
+  }
+
+  @Override
+  protected void onResume() {
+    computeIntent();
   }
 }
