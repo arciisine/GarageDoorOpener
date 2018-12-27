@@ -33,6 +33,7 @@ class MyApp extends StatelessWidget {
 
     return MaterialApp(
       title: 'Garage Door Opener',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         // This is the theme of your application.
         //
@@ -151,6 +152,7 @@ class _GarageInterfaceState extends State<GarageInterface> {
       return;
     }
     try {
+      await this.auth();
       await this
           .sendMessage('Activate', '${DateTime.now().millisecondsSinceEpoch}');
     } catch (e) {
