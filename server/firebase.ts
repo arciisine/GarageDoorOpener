@@ -1,6 +1,5 @@
 import * as firebase from 'firebase';
 import { Garage } from './garage';
-import { EventEmitter } from 'events';
 
 const conf = require('../firebase-config');
 const app = firebase.initializeApp(conf);
@@ -17,19 +16,19 @@ export async function listen() {
   seen.set('Activate', 0);
   seen.set('Snapshot', 0);
 
-  ref.on('child_added', async function (item) {
-    if (!item || !item.exists) {
-      console.log('[Firebase] Received ' + (!item ? 'empty' : 'expired'));
+  function onUpdate(item: any) {
+    if (!item || item.key !== 'Activate') {
+      return;
+    }
+
+    if (!item.exists) {
+      console.log('[Firebase] Received ' + item);
       return;
     }
 
     const key = item.key;
-    if (!key) {
-      return;
-    }
 
     //Consume message
-    await ref.child(key).remove();
 
     const val = Object.assign({ value: undefined }, item.val());
 
@@ -52,5 +51,8 @@ export async function listen() {
     switch (key) {
       case 'Activate': Garage.triggerDoor(value); break;
     }
-  });
+  }
+
+  ref.on('child_added', onUpdate);
+  ref.on('child_changed', onUpdate);
 }

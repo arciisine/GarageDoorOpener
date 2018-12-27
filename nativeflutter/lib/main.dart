@@ -109,11 +109,9 @@ class _GarageInterfaceState extends State<GarageInterface> {
     );
 
     // get email here
-    try {
-      await _firebaseauth.signInWithEmailAndPassword(
-          email: user.email, password: deviceId);
-      this.user = user;
-    } catch (e) {}
+    await _firebaseauth.signInWithEmailAndPassword(
+        email: user.email, password: deviceId);
+    this.user = user;
 
     this.authFuture = null;
 
