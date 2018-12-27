@@ -221,8 +221,8 @@ class _GarageInterfaceState extends State<GarageInterface>
       ),
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.directions_run),
-        onPressed: () {
-          activate();
+        onPressed: () async {
+          await activate();
           Scaffold.of(context).showSnackBar(snackbar);
         },
       ), // This trailing comma makes auto-formatting nicer for build methods.
