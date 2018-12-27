@@ -84,11 +84,25 @@ class _GarageInterfaceState extends State<GarageInterface> {
   int lastSent = 0;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
   final FirebaseAuth _firebaseauth = FirebaseAuth.instance;
+  static const platform = const MethodChannel('app.channel.shared.intent');
   String imageUrl = getImageUrl();
   FirebaseUser user;
 
   Future<void> authFuture;
   bool imageLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    checkIntent();
+  }
+
+  checkIntent() async {
+    var voiced = await platform.invokeMethod("voiceLaunch");
+    if (voiced == 'true') {
+      activate();
+    }
+  }
 
   auth() async {
     if (this.user == null) {
@@ -146,7 +160,7 @@ class _GarageInterfaceState extends State<GarageInterface> {
     this.lastSent = DateTime.now().millisecondsSinceEpoch;
   }
 
-  toggle() async {
+  activate() async {
     if (DateTime.now().millisecondsSinceEpoch < (this.lastSent + 1000)) {
       // Don't double send
       return;
@@ -182,7 +196,7 @@ class _GarageInterfaceState extends State<GarageInterface> {
       ),
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.directions_run),
-        onPressed: toggle,
+        onPressed: activate,
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
