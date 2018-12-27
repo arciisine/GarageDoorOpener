@@ -1,13 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:flutter/services.dart';
 import 'package:device_id/device_id.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
-void main() => runApp(MyApp());
+void main() async {
+  final fbapp = await FirebaseApp.configure(
+    name: 'db2',
+    options: const FirebaseOptions(
+      googleAppID: '1:297855924061:android:669871c998cc21bd',
+      apiKey: 'AIzaSyD_shO5mfO9lhy2TVWhfo1VUmARKlG4suk',
+      databaseURL: 'https://flutterfire-cd2f7.firebaseio.com',
+    ),
+  );
+  runApp(MyApp(app: fbapp));
+}
 
 class MyApp extends StatelessWidget {
+  final FirebaseApp app;
+  MyApp({this.app});
+
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
@@ -54,20 +69,33 @@ class GarageInterface extends StatefulWidget {
 }
 
 class _GarageInterfaceState extends State<GarageInterface> {
-  String ip = '192.168.1.168';
-  String appId = 'garagedoorapp-1d1fe.appspot.com';
+  static String ip = '192.168.1.168';
+  static String appId = 'garagedoorapp-1d1fe.appspot.com';
+
+  static getImageUrl() {
+    final now = new DateTime.now().millisecondsSinceEpoch;
+    final url =
+        'https://storage.googleapis.com/${appId}/images/door-snap.jpg?cache=${now}';
+    print(url);
+    return url;
+  }
+
   int lastSent = 0;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
   final FirebaseAuth _firebaseauth = FirebaseAuth.instance;
+  String imageUrl = getImageUrl();
+  FirebaseUser user;
 
   Future<void> authFuture;
   bool imageLoading = false;
 
   auth() async {
-    if (this.authFuture == null) {
-      this.authFuture = this._auth();
+    if (this.user == null) {
+      if (this.authFuture == null) {
+        this.authFuture = this._auth();
+      }
+      return await this.authFuture;
     }
-    return await this.authFuture;
   }
 
   _auth() async {
@@ -81,15 +109,64 @@ class _GarageInterfaceState extends State<GarageInterface> {
     );
 
     // get email here
+    try {
+      await _firebaseauth.signInWithEmailAndPassword(
+          email: user.email, password: deviceId);
+      this.user = user;
+    } catch (e) {}
+
+    this.authFuture = null;
+
     print("signed in " + user.email + " " + deviceId);
   }
 
+  loadSnapshot() async {
+    if (this.imageLoading) {
+      return;
+    }
+
+    this.imageLoading = true;
+
+    while (this.imageLoading) {
+      print('Loading Image');
+      setState(() {
+        imageUrl = getImageUrl();
+      });
+      await Future.delayed(const Duration(milliseconds: 2000));
+    }
+  }
+
+  sendMessage(String key, String value) async {
+    try {
+      await FirebaseAuth.instance.currentUser();
+    } catch (e) {
+      await this.auth();
+    }
+
+    FirebaseDatabase.instance
+        .reference()
+        .child('/${key}')
+        .set(value == null ? 'true' : value);
+    this.lastSent = DateTime.now().millisecondsSinceEpoch;
+  }
+
   toggle() async {
-    await auth();
+    if (DateTime.now().millisecondsSinceEpoch < (this.lastSent + 1000)) {
+      // Don't double send
+      return;
+    }
+    try {
+      await this.sendMessage('Activate', null);
+    } catch (e) {
+      // fallback if firebase is down
+      await http.post('http://${ip}/activate');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    loadSnapshot();
+
     // This method is rerun every time setState is called, for instance as done
     // by the _incrementCounter method above.
     //
@@ -97,27 +174,13 @@ class _GarageInterfaceState extends State<GarageInterface> {
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
     return Scaffold(
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[],
-        ),
+      body: new Row(
+        children: [
+          new Expanded(
+              /*or Column*/
+              child: new Image.network(imageUrl,
+                  fit: BoxFit.fitWidth, gaplessPlayback: true)),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.directions_run),
