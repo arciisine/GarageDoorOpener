@@ -97,6 +97,18 @@ class _GarageInterfaceState extends State<GarageInterface> {
     checkIntent();
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    setState(() {
+      if (state == AppLifecycleState.resumed) {
+        checkIntent();
+        loadSnapshot();
+      } else {
+        this.imageLoading = false;
+      }
+    });
+  }
+
   checkIntent() async {
     var voiced = await platform.invokeMethod("voiceLaunch");
     if (voiced == 'true') {
