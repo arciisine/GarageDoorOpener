@@ -47,7 +47,7 @@ class MyApp extends StatelessWidget {
         // is not restarted.
         primarySwatch: Colors.blue,
       ),
-      home: GarageInterface(),
+      home: new Scaffold(body: GarageInterface()),
     );
   }
 }
@@ -89,7 +89,6 @@ class _GarageInterfaceState extends State<GarageInterface>
 
   final GoogleSignIn _googleSignIn = GoogleSignIn();
   final FirebaseAuth _firebaseauth = FirebaseAuth.instance;
-  SnackBar snackbar;
   FirebaseUser user;
   Timer _timer;
   Future<void> authFuture;
@@ -201,8 +200,6 @@ class _GarageInterfaceState extends State<GarageInterface>
   @override
   Widget build(BuildContext context) {
     runSnapshot();
-    this.snackbar =
-        SnackBar(content: Text('Request sent'), duration: Duration(seconds: 2));
 
     // This method is rerun every time setState is called, for instance as done
     // by the _incrementCounter method above.
@@ -223,6 +220,8 @@ class _GarageInterfaceState extends State<GarageInterface>
         child: Icon(Icons.directions_run),
         onPressed: () async {
           await activate();
+          var snackbar = SnackBar(
+              content: Text('Request sent'), duration: Duration(seconds: 2));
           Scaffold.of(context).showSnackBar(snackbar);
         },
       ), // This trailing comma makes auto-formatting nicer for build methods.

@@ -14,14 +14,17 @@ public class MainActivity extends FlutterActivity {
   boolean voice = false;
 
   void computeIntent() {
-    Intent intent = getIntent();
-    int flags = intent.getFlags();
-    String pkg = intent.getPackage();
+    try {
+      Intent intent = getIntent();
+      int flags = intent.getFlags();
+      String pkg = intent.getPackage();
 
-    if (pkg != null && (flags & Intent.FLAG_ACTIVITY_NEW_TASK) > 0) {
-      voice = true;
-    } else {
-      voice = false;
+      if (pkg != null && (flags & Intent.FLAG_ACTIVITY_NEW_TASK) > 0) {
+        voice = true;
+      } else {
+        voice = false;
+      }
+    } catch (Exception e) {
     }
   }
 
@@ -45,10 +48,7 @@ public class MainActivity extends FlutterActivity {
 
   @Override
   protected void onResume() {
-    try {
-      computeIntent();
-    } catch (Exception e) {
-      voice = false;
-    }
+    super.onResume();
+    computeIntent();
   }
 }
