@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/services.dart';
-import 'package:device_id/device_id.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -152,8 +151,6 @@ class _GarageInterfaceState extends State<GarageInterface>
   }
 
   _auth() async {
-    String deviceId = await DeviceId.getID;
-
     GoogleSignInAccount googleUser = await _googleSignIn.signIn();
     GoogleSignInAuthentication googleAuth = await googleUser.authentication;
     FirebaseUser user = await _firebaseauth.signInWithGoogle(
@@ -161,23 +158,12 @@ class _GarageInterfaceState extends State<GarageInterface>
       idToken: googleAuth.idToken,
     );
 
-    // get email here
-    await _firebaseauth.signInWithEmailAndPassword(
-        email: user.email, password: deviceId);
     this.user = user;
-
     this.authFuture = null;
-
-    print("signed in " + user.email + " " + deviceId);
   }
 
   sendMessage(String key, String value) async {
-    try {
-      await FirebaseAuth.instance.currentUser();
-    } catch (e) {
-      await this.auth();
-    }
-
+    await this.auth();
     FirebaseDatabase.instance.reference().child('/${key}').set(value);
     this.lastSent = DateTime.now().millisecondsSinceEpoch;
   }
