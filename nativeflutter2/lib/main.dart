@@ -8,21 +8,11 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'dart:async';
 
 void main() async {
-  final fbapp = await Firebase.initializeApp(
-    name: 'db2',
-    options: FirebaseOptions(
-      appId: '1:297855924061:android:669871c998cc21bd',
-      apiKey: 'AIzaSyD_shO5mfO9lhy2TVWhfo1VUmARKlG4suk',
-      databaseURL: 'https://flutterfire-cd2f7.firebaseio.com',
-    ),
-  );
-  runApp(MyApp(app: fbapp));
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  final FirebaseApp app;
-  MyApp({this.app});
-
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
@@ -186,32 +176,35 @@ class _GarageInterfaceState extends State<GarageInterface>
 
   @override
   Widget build(BuildContext context) {
-    runSnapshot();
-
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      body: new Row(
-        children: [
-          new Expanded(
-              /*or Column*/
-              child: new Image.network(imageUrl,
-                  fit: BoxFit.fitWidth, gaplessPlayback: true)),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        child: Icon(Icons.directions_run),
-        onPressed: () async {
-          await activate();
-          var snackbar = SnackBar(
-              content: Text('Request sent'), duration: Duration(seconds: 2));
-          Scaffold.of(context).showSnackBar(snackbar);
-        },
-      ), // This trailing comma makes auto-formatting nicer for build methods.
-    );
+    return FutureBuilder(
+        future: Firebase.initializeApp(),
+        builder: (context, snapshot) {
+          // This method is rerun every time setState is called, for instance as done
+          // by the _incrementCounter method above.
+          //
+          // The Flutter framework has been optimized to make rerunning build methods
+          // fast, so that you can just rebuild anything that needs updating rather
+          // than having to individually change instances of widgets.
+          return Scaffold(
+            body: new Row(
+              children: [
+                new Expanded(
+                    /*or Column*/
+                    child: new Image.network(imageUrl,
+                        fit: BoxFit.fitWidth, gaplessPlayback: true)),
+              ],
+            ),
+            floatingActionButton: FloatingActionButton(
+              child: Icon(Icons.directions_run),
+              onPressed: () async {
+                await activate();
+                var snackbar = SnackBar(
+                    content: Text('Request sent'),
+                    duration: Duration(seconds: 2));
+                Scaffold.of(context).showSnackBar(snackbar);
+              },
+            ), // This trailing comma makes auto-formatting nicer for build methods.
+          );
+        });
   }
 }
