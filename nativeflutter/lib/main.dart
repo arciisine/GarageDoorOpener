@@ -135,10 +135,10 @@ class _GarageInterfaceState extends State<GarageInterface>
   }
 
   checkIntent() async {
-    var voiced = await platform.invokeMethod("voiceLaunch");
-    if (voiced == 'true') {
-      activate();
-    }
+    // var voiced = await platform.invokeMethod("voiceLaunch");
+    // if (voiced == 'true') {
+    //   activate();
+    // }
   }
 
   auth() async {
