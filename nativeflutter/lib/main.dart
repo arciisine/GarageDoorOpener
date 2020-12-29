@@ -8,46 +8,40 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'dart:async';
 
 void main() async {
-  final fbapp = await FirebaseApp.configure(
-    name: 'db2',
-    options: const FirebaseOptions(
-      googleAppID: '1:297855924061:android:669871c998cc21bd',
-      apiKey: 'AIzaSyD_shO5mfO9lhy2TVWhfo1VUmARKlG4suk',
-      databaseURL: 'https://flutterfire-cd2f7.firebaseio.com',
-    ),
-  );
-  runApp(MyApp(app: fbapp));
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  final FirebaseApp app;
-  MyApp({this.app});
-
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ]);
+    return FutureBuilder(
+        future: Firebase.initializeApp(),
+        builder: (context, snapshot) {
+          SystemChrome.setPreferredOrientations([
+            DeviceOrientation.landscapeLeft,
+            DeviceOrientation.landscapeRight,
+          ]);
 
-    return MaterialApp(
-      title: 'Garage Door Opener',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
-        primarySwatch: Colors.blue,
-      ),
-      home: new Scaffold(body: GarageInterface()),
-    );
+          return MaterialApp(
+            title: 'Garage Door Opener',
+            debugShowCheckedModeBanner: false,
+            theme: ThemeData(
+              // This is the theme of your application.
+              //
+              // Try running your application with "flutter run". You'll see the
+              // application has a blue toolbar. Then, without quitting the app, try
+              // changing the primarySwatch below to Colors.green and then invoke
+              // "hot reload" (press "r" in the console where you ran "flutter run",
+              // or simply save your changes to "hot reload" in a Flutter IDE).
+              // Notice that the counter didn't reset back to zero; the application
+              // is not restarted.
+              primarySwatch: Colors.blue,
+            ),
+            home: new Scaffold(body: GarageInterface()),
+          );
+        });
   }
 }
 
@@ -84,11 +78,11 @@ class _GarageInterfaceState extends State<GarageInterface>
   }
 
   int lastSent = 0;
-  String imageUrl = getImageUrl();
+  String imageUrl;
 
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
-  final FirebaseAuth _firebaseauth = FirebaseAuth.instance;
-  FirebaseUser user;
+  GoogleSignIn _googleSignIn;
+  FirebaseAuth _firebaseauth;
+  User user;
   Timer _timer;
   Future<void> authFuture;
 
@@ -96,6 +90,7 @@ class _GarageInterfaceState extends State<GarageInterface>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    this.imageUrl = getImageUrl();
     checkIntent();
   }
 
@@ -145,20 +140,28 @@ class _GarageInterfaceState extends State<GarageInterface>
     if (this.user == null) {
       if (this.authFuture == null) {
         this.authFuture = this._auth();
+        this.authFuture.catchError((err) {
+          this.authFuture = null;
+          print(err);
+        });
       }
       return await this.authFuture;
     }
   }
 
   _auth() async {
+    this._googleSignIn = this._googleSignIn ?? GoogleSignIn();
+    this._firebaseauth = this._firebaseauth ?? FirebaseAuth.instance;
+
     GoogleSignInAccount googleUser = await _googleSignIn.signIn();
     GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-    FirebaseUser user = await _firebaseauth.signInWithGoogle(
+    final AuthCredential credential = GoogleAuthProvider.credential(
       accessToken: googleAuth.accessToken,
       idToken: googleAuth.idToken,
     );
+    UserCredential cred = await _firebaseauth.signInWithCredential(credential);
 
-    this.user = user;
+    this.user = cred.user;
     this.authFuture = null;
   }
 
