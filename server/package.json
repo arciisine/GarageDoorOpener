@@ -15,7 +15,7 @@
     "@types/google-cloud__storage": "^1.1.6",
     "@types/node": "^8.0.27",
     "@types/rpio": "0.0.1",
-    "express": "^4.15.3",
+    "express": "^4.18.2",
     "firebase": "^4.6.2",
     "opencv": "github:peterbraden/node-opencv",
     "rpio": "^0.9.17",
