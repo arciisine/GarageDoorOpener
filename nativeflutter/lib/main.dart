@@ -6,6 +6,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'dart:async';
+import 'dart:developer';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -46,7 +47,7 @@ class MyApp extends StatelessWidget {
 }
 
 class GarageInterface extends StatefulWidget {
-  GarageInterface({Key key, this.title}) : super(key: key);
+  GarageInterface({Key? key, this.title}) : super(key: key);
 
   // This widget is the home page of your application. It is stateful, meaning
   // that it has a State object (defined below) that contains fields that affect
@@ -57,7 +58,7 @@ class GarageInterface extends StatefulWidget {
   // used by the build method of the State. Fields in a Widget subclass are
   // always marked "final".
 
-  final String title;
+  final String? title;
 
   @override
   _GarageInterfaceState createState() => _GarageInterfaceState();
@@ -78,13 +79,13 @@ class _GarageInterfaceState extends State<GarageInterface>
   }
 
   int lastSent = 0;
-  String imageUrl;
+  String? imageUrl;
 
-  GoogleSignIn _googleSignIn;
-  FirebaseAuth _firebaseauth;
-  User user;
-  Timer _timer;
-  Future<void> authFuture;
+  GoogleSignIn? _googleSignIn;
+  FirebaseAuth? _firebaseauth;
+  User? user;
+  Timer? _timer;
+  Future<void>? authFuture;
 
   @override
   void initState() {
@@ -115,7 +116,7 @@ class _GarageInterfaceState extends State<GarageInterface>
     if (_timer != null) {
       var old = _timer;
       _timer = null;
-      old.cancel();
+      old?.cancel();
     }
   }
 
@@ -140,7 +141,7 @@ class _GarageInterfaceState extends State<GarageInterface>
     if (this.user == null) {
       if (this.authFuture == null) {
         this.authFuture = this._auth();
-        this.authFuture.catchError((err) {
+        this.authFuture?.catchError((err) {
           this.authFuture = null;
           print(err);
         });
@@ -153,15 +154,16 @@ class _GarageInterfaceState extends State<GarageInterface>
     this._googleSignIn = this._googleSignIn ?? GoogleSignIn();
     this._firebaseauth = this._firebaseauth ?? FirebaseAuth.instance;
 
-    GoogleSignInAccount googleUser = await _googleSignIn.signIn();
-    GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-    final AuthCredential credential = GoogleAuthProvider.credential(
-      accessToken: googleAuth.accessToken,
-      idToken: googleAuth.idToken,
-    );
-    UserCredential cred = await _firebaseauth.signInWithCredential(credential);
+    GoogleSignInAccount? googleUser = await _googleSignIn?.signIn();
+    GoogleSignInAuthentication? googleAuth = await googleUser?.authentication;
 
-    this.user = cred.user;
+    final AuthCredential credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth?.accessToken,
+      idToken: googleAuth?.idToken,
+    );
+    UserCredential? cred = await _firebaseauth?.signInWithCredential(credential);
+
+    this.user = cred?.user;
     this.authFuture = null;
   }
 
@@ -171,18 +173,19 @@ class _GarageInterfaceState extends State<GarageInterface>
     this.lastSent = DateTime.now().millisecondsSinceEpoch;
   }
 
-  activate() async {
+  Future<void> activate() async {
     if (DateTime.now().millisecondsSinceEpoch < (this.lastSent + 1000)) {
       // Don't double send
       return;
     }
     try {
-      await this.auth();
       await this
           .sendMessage('Activate', '${DateTime.now().millisecondsSinceEpoch}');
     } catch (e) {
+      print("Failed to write");
+      print(e);
       // fallback if firebase is down
-      await http.post('http://${ip}/activate');
+      await http.post(Uri.http(ip, '/activate'));
     }
   }
 
@@ -201,7 +204,7 @@ class _GarageInterfaceState extends State<GarageInterface>
         children: [
           new Expanded(
               /*or Column*/
-              child: new Image.network(imageUrl,
+              child: new Image.network(imageUrl ?? '',
                   fit: BoxFit.fitWidth, gaplessPlayback: true)),
         ],
       ),
@@ -211,7 +214,7 @@ class _GarageInterfaceState extends State<GarageInterface>
           await activate();
           var snackbar = SnackBar(
               content: Text('Request sent'), duration: Duration(seconds: 2));
-          Scaffold.of(context).showSnackBar(snackbar);
+          ScaffoldMessenger.of(context).showSnackBar(snackbar);
         },
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );

@@ -11,6 +11,7 @@
 	<uses-permission android:name="android.permission.READ_PHONE_STATE"/>
 	<uses-permission android:name="android.permission.GET_ACCOUNTS" />
 	<uses-permission android:name="android.permission.GET_ACCOUNTS_PRIVILEGED" />
+    <uses-sdk android:minSdkVersion="31" android:targetSdkVersion="32" />
 
     <!-- io.flutter.app.FlutterApplication is an android.app.Application that
          calls FlutterMain.startInitialization(this); in its onCreate method.
@@ -18,15 +19,23 @@
          additional functionality it is fine to subclass or reimplement
          FlutterApplication and put your custom class here. -->
     <application
-        android:name="io.flutter.app.FlutterApplication"
+        android:name="${applicationName}"
         android:label="Garage Door"
         android:icon="@mipmap/ic_launcher">
+        <meta-data
+            android:name="com.google.android.gms.car.application"
+            android:resource="@xml/automotive_app_desc"/>        
+        <activity 
+            android:name="io.flutter.embedding.android.FlutterActivity"
+        >
+        </activity>
         <activity
             android:name=".MainActivity"
             android:theme="@style/LaunchTheme"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|layoutDirection|fontScale|screenLayout|density"
 	        android:launchMode="singleTask"
 	     	android:screenOrientation="landscape"
+            android:exported="true"
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize">
             <!-- This keeps the window background of the activity showing
