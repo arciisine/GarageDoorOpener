@@ -1,71 +1,51 @@
 import * as firebase from 'firebase/app';
 import * as firebaseAuth from 'firebase/auth';
 import * as firebaseDb from 'firebase/database';
+
+import { Inject, Injectable, InjectableFactory } from '@travetto/di';
+import { Cache } from '@travetto/cache';
+import type { MemoryModelService } from '@travetto/model-memory';
+
 import { Garage } from './garage';
-import { Inject, Injectable } from '@travetto/di';
+import { RuntimeResources } from '@travetto/runtime';
 
-const conf = require('../firebase-config');
-
-export const config = conf;
+class GetFirebaseDb {
+  @InjectableFactory()
+  static async getDb(): Promise<firebaseDb.Database> {
+    const conf = JSON.parse(await RuntimeResources.read('firebase-config.json'));
+    const app = firebase.initializeApp(conf);
+    const auth = firebaseAuth.getAuth(app);
+    const db = firebaseDb.getDatabase(app);
+    firebaseAuth.signInAnonymously(auth);
+    return db;
+  }
+}
 
 @Injectable({ autoCreate: true })
 export class FirebaseListener {
 
   @Inject()
+  store: MemoryModelService;
+
+  @Inject()
+  db: firebaseDb.Database;
+
+  @Inject()
   garage: Garage;
 
-  seen = new Map<string, number>([
-    ['Activate', 0],
-    ['Snapshot', 0]
-  ]);
-
-  onUpdate(item: firebaseDb.DataSnapshot): void {
-    if (!item || item.key !== 'Activate') {
-      return;
-    }
-
-    if (!item.exists) {
+  @Cache('store', '2s', { key: (item: firebaseDb.DataSnapshot) => item.key ?? 'unknown' })
+  async onUpdate(item: firebaseDb.DataSnapshot): Promise<void> {
+    if (!item || item.key !== 'Activate' || !item.exists()) {
       console.log('[Firebase] Received', item);
       return;
     }
-
-    const key = item.key;
-
-    //Consume message
-
-    const val = Object.assign({ value: undefined }, item.val());
-
-    //Read action/query from event
-    const value = val.value;
-
-    let time = Date.now();
-    let prev = this.seen.get(key) || 0;
-
-    if ((time - prev) < 2000) {
-      console.log('[Firebase] Already processed event', { [key]: value, time });
-    } else {
-      console.log('[Firebase] Raw Event', { [key]: item.val() });
-      console.log('[Firebase] Processing', { [key]: value, time });
-      console.log('[Firebase] Timestamps', { prev, curr: time });
-      this.seen.set(key, time);
-    }
-
-    switch (key) {
-      case 'Activate': this.garage.triggerDoor(value); break;
-    }
+    await this.garage.triggerDoor(item.val().value);
   }
 
   async postConstruct() {
-    const app = firebase.initializeApp(conf);
-    const auth = firebaseAuth.getAuth(app);
-    const db = firebaseDb.getDatabase(app);
-
-    firebaseAuth.signInAnonymously(auth);
-    const ref = firebaseDb.ref(db);
     console.log('[Firebase] Listening');
-
+    const ref = firebaseDb.ref(this.db);
     const q = firebaseDb.query(ref, firebaseDb.orderByKey());
-
     firebaseDb.onChildAdded(q, (item) => this.onUpdate(item));
     firebaseDb.onChildChanged(q, (item) => this.onUpdate(item));
   }

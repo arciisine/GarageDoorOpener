@@ -8,13 +8,13 @@ import { S3ModelService } from '@travetto/model-s3';
 @Controller('/garage')
 export class Garage {
 
-  static DOOR_GPIO = 18
+  static DOOR_PIN = 18
 
   lock = false;
   lastUrl: string;
 
   postConstruct() {
-    rpio.open(Garage.DOOR_GPIO, rpio.OUTPUT);
+    rpio.open(Garage.DOOR_PIN, rpio.OUTPUT);
   }
 
   @Inject()
@@ -24,9 +24,9 @@ export class Garage {
   async triggerDoor(action?: string) {
     console.log('[Door] Triggering', action);
 
-    rpio.write(Garage.DOOR_GPIO, rpio.HIGH);
+    rpio.write(Garage.DOOR_PIN, rpio.HIGH);
     rpio.sleep(1)
-    rpio.write(Garage.DOOR_GPIO, rpio.LOW);
+    rpio.write(Garage.DOOR_PIN, rpio.LOW);
 
     return { status: 'active' };
   }
