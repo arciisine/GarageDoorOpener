@@ -1,28 +1,31 @@
-import * as firebase from 'firebase';
+import * as firebase from 'firebase/app';
+import * as firebaseAuth from 'firebase/auth';
+import * as firebaseDb from 'firebase/database';
 import { Garage } from './garage';
+import { Inject, Injectable } from '@travetto/di';
 
 const conf = require('../firebase-config');
-const app = firebase.initializeApp(conf);
 
 export const config = conf;
 
-export async function listen() {
-  await app.auth().signInAnonymously();
+@Injectable({ autoCreate: true })
+export class FirebaseListener {
 
-  const ref = app.database().ref();
-  console.log('[Firebase] Listening');
+  @Inject()
+  garage: Garage;
 
-  const seen = new Map<string, number>();
-  seen.set('Activate', 0);
-  seen.set('Snapshot', 0);
+  seen = new Map<string, number>([
+    ['Activate', 0],
+    ['Snapshot', 0]
+  ]);
 
-  function onUpdate(item: any) {
+  onUpdate(item: firebaseDb.DataSnapshot): void {
     if (!item || item.key !== 'Activate') {
       return;
     }
 
     if (!item.exists) {
-      console.log('[Firebase] Received ' + item);
+      console.log('[Firebase] Received', item);
       return;
     }
 
@@ -36,23 +39,34 @@ export async function listen() {
     const value = val.value;
 
     let time = Date.now();
-    let prev = seen.get(key) || 0;
-
+    let prev = this.seen.get(key) || 0;
 
     if ((time - prev) < 2000) {
-      console.log(`[Firebase] Already processed event ${key}=${value} @ ${time}`);
+      console.log('[Firebase] Already processed event', { [key]: value, time });
     } else {
-      console.log(`[Firebase] Raw Event { ${key} : ${JSON.stringify(item.val())} }`);
-      console.log(`[Firebase] Processing ${key}=${value} @ ${time}`);
-      console.log(`[Firebase] Timestamps prev=${prev} curr=${time}`);
-      seen.set(key, time);
+      console.log('[Firebase] Raw Event', { [key]: item.val() });
+      console.log('[Firebase] Processing', { [key]: value, time });
+      console.log('[Firebase] Timestamps', { prev, curr: time });
+      this.seen.set(key, time);
     }
 
     switch (key) {
-      case 'Activate': Garage.triggerDoor(value); break;
+      case 'Activate': this.garage.triggerDoor(value); break;
     }
   }
 
-  ref.on('child_added', onUpdate);
-  ref.on('child_changed', onUpdate);
+  async postConstruct() {
+    const app = firebase.initializeApp(conf);
+    const auth = firebaseAuth.getAuth(app);
+    const db = firebaseDb.getDatabase(app);
+
+    firebaseAuth.signInAnonymously(auth);
+    const ref = firebaseDb.ref(db);
+    console.log('[Firebase] Listening');
+
+    const q = firebaseDb.query(ref, firebaseDb.orderByKey());
+
+    firebaseDb.onChildAdded(q, (item) => this.onUpdate(item));
+    firebaseDb.onChildChanged(q, (item) => this.onUpdate(item));
+  }
 }
