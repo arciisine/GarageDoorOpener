@@ -71,11 +71,9 @@ class _GarageInterfaceState extends State<GarageInterface>
   static const platform = const MethodChannel('app.channel.shared.intent');
 
   static getImageUrl() {
-    final now = new DateTime.now().millisecondsSinceEpoch;
-    final url =
-        'https://storage.googleapis.com/${appId}/images/door-snap.jpg?cache=${now}';
-    print(url);
-    return url;
+    return FirebaseDatabase.instance.reference().child('/Image').once().then((DataSnapshot snapshot) {
+      return snapshot.value as String;
+    });
   }
 
   int lastSent = 0;
