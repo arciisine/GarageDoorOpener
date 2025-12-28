@@ -4,7 +4,7 @@
   "description": "",
   "scripts": {
     "test": " npx trv test",
-    "server": "npx trv web:http"
+    "server": "npx trv web:http -cr"
   },
   "author": "",
   "license": "ISC",
@@ -17,9 +17,8 @@
     "@travetto/runtime": "^7.0.0-rc.0",
     "@travetto/web": "^7.0.0-rc.0",
     "@travetto/web-http": "^7.0.0-rc.0",
-    "@types/rpio": "^2.4.6",
     "firebase": "^12.7.0",
-    "rpio": "^2.4.2"
+    "onoff": "^6.0.3"
   },
   "devDependencies": {
     "@travetto/compiler": "^7.0.0-rc.0",

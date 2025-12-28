@@ -1,23 +1,22 @@
-import * as fs from 'node:fs';
-import * as path from 'node:path';
-import * as rpio from 'rpio';
+import fs from 'node:fs';
+import path from 'node:path';
+import onoff from 'onoff';
 
 import { Controller, Post, QueryParam } from '@travetto/web';
 import { Inject } from '@travetto/di';
 import { S3ModelService } from '@travetto/model-s3';
 import * as firebaseDb from 'firebase/database';
+import { Util } from '@travetto/runtime';
 
 @Controller('/garage')
 export class Garage {
 
-  static DOOR_PIN = 18
+  static DOOR_PIN = 515;
 
   lock = false;
   lastUrl: string;
 
-  postConstruct() {
-    rpio.open(Garage.DOOR_PIN, rpio.OUTPUT);
-  }
+  pin = new onoff.Gpio(Garage.DOOR_PIN, 'out');
 
   @Inject()
   s3: S3ModelService;
@@ -29,9 +28,9 @@ export class Garage {
   async triggerDoor(action?: string) {
     console.log('[Door] Triggering', action);
 
-    rpio.write(Garage.DOOR_PIN, rpio.HIGH);
-    rpio.sleep(1)
-    rpio.write(Garage.DOOR_PIN, rpio.LOW);
+    await this.pin.write(1);
+    await Util.nonBlockingTimeout(1000);
+    await this.pin.write(0);
 
     return { status: 'active' };
   }
