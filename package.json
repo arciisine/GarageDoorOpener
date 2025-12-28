@@ -1,0 +1,33 @@
+{
+  "name": "garagedooropener",
+  "version": "1.0.0",
+  "description": "* Raspberry PI * Camera Module * mjpeg stream support",
+  "homepage": "https://github.com/arciisine/GarageDoorOpener#readme",
+  "bugs": {
+    "url": "https://github.com/arciisine/GarageDoorOpener/issues"
+  },
+  "workspaces": [
+    "server/"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arciisine/GarageDoorOpener.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "devDependencies": {
+    "@travetto/compiler": "^7.0.0-rc.0",
+    "@travetto/eslint": "^7.0.0-rc.0",
+    "@travetto/pack": "^7.0.0-rc.0",
+    "@travetto/repo": "^7.0.0-rc.0",
+    "@travetto/test": "^7.0.0-rc.0"
+  },
+  "dependencies": {
+    "@travetto/cli": "^7.0.0-rc.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}

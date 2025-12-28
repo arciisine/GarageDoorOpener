@@ -33,6 +33,14 @@ export class FirebaseListener {
   @Inject()
   garage: Garage;
 
+  async postConstruct() {
+    console.log('[Firebase] Listening');
+    const ref = firebaseDb.ref(this.db);
+    const q = firebaseDb.query(ref, firebaseDb.orderByKey());
+    firebaseDb.onChildAdded(q, (item) => this.onUpdate(item));
+    firebaseDb.onChildChanged(q, (item) => this.onUpdate(item));
+  }
+
   @Cache('store', '2s', { key: (item: firebaseDb.DataSnapshot) => item.key ?? 'unknown' })
   async onUpdate(item: firebaseDb.DataSnapshot): Promise<void> {
     if (!item || item.key !== 'Activate' || !item.exists()) {
@@ -40,13 +48,5 @@ export class FirebaseListener {
       return;
     }
     await this.garage.triggerDoor(item.val().value);
-  }
-
-  async postConstruct() {
-    console.log('[Firebase] Listening');
-    const ref = firebaseDb.ref(this.db);
-    const q = firebaseDb.query(ref, firebaseDb.orderByKey());
-    firebaseDb.onChildAdded(q, (item) => this.onUpdate(item));
-    firebaseDb.onChildChanged(q, (item) => this.onUpdate(item));
   }
 }
