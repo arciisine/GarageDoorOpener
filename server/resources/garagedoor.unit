@@ -1,0 +1,12 @@
+[Unit]
+Description=Garage door opener
+After=network.target
+
+[Service]
+Type=simple
+User=tim
+ExecStart=/usr/bin/node /home/tim/server/garagedoor.js
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
