@@ -9,3 +9,4 @@ google-services.json
 native/report/
 native-bk/
 .trv/
+dist/

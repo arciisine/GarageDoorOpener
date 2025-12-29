@@ -4,7 +4,8 @@
   "description": "",
   "scripts": {
     "test": " npx trv test",
-    "server": "npx trv web:http -cr"
+    "server": "npx trv web:http -cr",
+    "pack": "npx trv pack:zip -o '@/dist/garage-door-server.zip'"
   },
   "author": "",
   "license": "ISC",

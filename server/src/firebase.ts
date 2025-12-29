@@ -21,7 +21,7 @@ class GetFirebaseDb {
   }
 }
 
-@Injectable({ autoCreate: true })
+@Injectable({ autoInject: true })
 export class FirebaseListener {
 
   @Inject()

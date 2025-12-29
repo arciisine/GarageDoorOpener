@@ -44,7 +44,7 @@ export class Garage {
       try {
         console.log('[Snapshot] Starting', { img });
         this.lock = true;
-        const pathName = `/images/${path.basename(img)}.${path.extname(img)}`;
+        const pathName = `/images/${path.basename(img)}`;
         await this.s3.upsertBlob(pathName, fs.createReadStream(img));
         this.lastUrl = await this.s3.getBlobReadUrl(pathName, '1h');
         const ref = firebaseDb.ref(this.db, '/Image');
