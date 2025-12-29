@@ -1,4 +1,4 @@
-package com.example.garage_door
+package org.arcsine.GarageDoor
 
 import io.flutter.embedding.android.FlutterActivity
 

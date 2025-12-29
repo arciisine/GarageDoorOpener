@@ -9,7 +9,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.garage_door"
+    namespace = "org.arcsine.GarageDoor"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
