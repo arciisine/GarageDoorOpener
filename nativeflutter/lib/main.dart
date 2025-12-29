@@ -6,7 +6,6 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'dart:async';
-import 'dart:developer';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,31 +17,32 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
-        future: Firebase.initializeApp(),
-        builder: (context, snapshot) {
-          SystemChrome.setPreferredOrientations([
-            DeviceOrientation.landscapeLeft,
-            DeviceOrientation.landscapeRight,
-          ]);
+      future: Firebase.initializeApp(),
+      builder: (context, snapshot) {
+        SystemChrome.setPreferredOrientations([
+          DeviceOrientation.landscapeLeft,
+          DeviceOrientation.landscapeRight,
+        ]);
 
-          return MaterialApp(
-            title: 'Garage Door Opener',
-            debugShowCheckedModeBanner: false,
-            theme: ThemeData(
-              // This is the theme of your application.
-              //
-              // Try running your application with "flutter run". You'll see the
-              // application has a blue toolbar. Then, without quitting the app, try
-              // changing the primarySwatch below to Colors.green and then invoke
-              // "hot reload" (press "r" in the console where you ran "flutter run",
-              // or simply save your changes to "hot reload" in a Flutter IDE).
-              // Notice that the counter didn't reset back to zero; the application
-              // is not restarted.
-              primarySwatch: Colors.blue,
-            ),
-            home: new Scaffold(body: GarageInterface()),
-          );
-        });
+        return MaterialApp(
+          title: 'Garage Door Opener',
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+            // This is the theme of your application.
+            //
+            // Try running your application with "flutter run". You'll see the
+            // application has a blue toolbar. Then, without quitting the app, try
+            // changing the primarySwatch below to Colors.green and then invoke
+            // "hot reload" (press "r" in the console where you ran "flutter run",
+            // or simply save your changes to "hot reload" in a Flutter IDE).
+            // Notice that the counter didn't reset back to zero; the application
+            // is not restarted.
+            primarySwatch: Colors.blue,
+          ),
+          home: new Scaffold(body: GarageInterface()),
+        );
+      },
+    );
   }
 }
 
@@ -67,8 +67,6 @@ class GarageInterface extends StatefulWidget {
 class _GarageInterfaceState extends State<GarageInterface>
     with WidgetsBindingObserver {
   static String ip = '192.168.1.168';
-  static String appId = 'garagedoorapp-1d1fe.appspot.com';
-  static const platform = const MethodChannel('app.channel.shared.intent');
 
   int lastSent = 0;
   String? imageUrl;
@@ -82,33 +80,18 @@ class _GarageInterfaceState extends State<GarageInterface>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    DatabaseReference ref = FirebaseDatabase.instance.reference().child('/Image');
+    DatabaseReference ref = FirebaseDatabase.instance.ref().child('/Image');
     Stream<DatabaseEvent> stream = ref.onValue;
     // Subscribe to the stream!
     stream.listen((DatabaseEvent event) {
-      this.imageUrl = event.snapshot;
+      this.imageUrl = event.snapshot.value as String?;
     });
-    checkIntent();
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      checkIntent();
-    }
-  }
-
-  checkIntent() async {
-    // var voiced = await platform.invokeMethod("voiceLaunch");
-    // if (voiced == 'true') {
-    //   activate();
-    // }
   }
 
   auth() async {
@@ -125,17 +108,18 @@ class _GarageInterfaceState extends State<GarageInterface>
   }
 
   _auth() async {
-    this._googleSignIn = this._googleSignIn ?? GoogleSignIn();
+    this._googleSignIn = this._googleSignIn ?? GoogleSignIn.instance;
     this._firebaseauth = this._firebaseauth ?? FirebaseAuth.instance;
 
-    GoogleSignInAccount? googleUser = await _googleSignIn?.signIn();
+    GoogleSignInAccount? googleUser = await _googleSignIn?.authenticate();
     GoogleSignInAuthentication? googleAuth = await googleUser?.authentication;
 
     final AuthCredential credential = GoogleAuthProvider.credential(
-      accessToken: googleAuth?.accessToken,
       idToken: googleAuth?.idToken,
     );
-    UserCredential? cred = await _firebaseauth?.signInWithCredential(credential);
+    UserCredential? cred = await _firebaseauth?.signInWithCredential(
+      credential,
+    );
 
     this.user = cred?.user;
     this.authFuture = null;
@@ -143,18 +127,20 @@ class _GarageInterfaceState extends State<GarageInterface>
 
   sendMessage(String key, String value) async {
     await this.auth();
-    FirebaseDatabase.instance.reference().child('/${key}').set(value);
+    FirebaseDatabase.instance.ref().child('/${key}').set(value);
     this.lastSent = DateTime.now().millisecondsSinceEpoch;
   }
 
-  Future<void> activate() async {
+  Future<void> trigger() async {
     if (DateTime.now().millisecondsSinceEpoch < (this.lastSent + 1000)) {
       // Don't double send
       return;
     }
     try {
-      await this
-          .sendMessage('Activate', '${DateTime.now().millisecondsSinceEpoch}');
+      await this.sendMessage(
+        'Activate',
+        '${DateTime.now().millisecondsSinceEpoch}',
+      );
     } catch (e) {
       print("Failed to write");
       print(e);
@@ -175,17 +161,23 @@ class _GarageInterfaceState extends State<GarageInterface>
       body: new Row(
         children: [
           new Expanded(
-              /*or Column*/
-              child: new Image.network(imageUrl ?? '',
-                  fit: BoxFit.fitWidth, gaplessPlayback: true)),
+            /*or Column*/
+            child: new Image.network(
+              imageUrl ?? '',
+              fit: BoxFit.fitWidth,
+              gaplessPlayback: true,
+            ),
+          ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.directions_run),
         onPressed: () async {
-          await activate();
+          await trigger();
           var snackbar = SnackBar(
-              content: Text('Request sent'), duration: Duration(seconds: 2));
+            content: Text('Request sent'),
+            duration: Duration(seconds: 2),
+          );
           ScaffoldMessenger.of(context).showSnackBar(snackbar);
         },
       ), // This trailing comma makes auto-formatting nicer for build methods.
