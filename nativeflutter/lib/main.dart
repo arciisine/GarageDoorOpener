@@ -70,9 +70,6 @@ class _GarageInterfaceState extends State<GarageInterface>
 
   int lastSent = 0;
   String? imageUrl;
-
-  GoogleSignIn? _googleSignIn;
-  FirebaseAuth? _firebaseauth;
   User? user;
   Future<void>? authFuture;
 
@@ -108,16 +105,14 @@ class _GarageInterfaceState extends State<GarageInterface>
   }
 
   _auth() async {
-    this._googleSignIn = this._googleSignIn ?? GoogleSignIn.instance;
-    this._firebaseauth = this._firebaseauth ?? FirebaseAuth.instance;
-
-    GoogleSignInAccount? googleUser = await _googleSignIn?.authenticate();
-    GoogleSignInAuthentication? googleAuth = await googleUser?.authentication;
+    GoogleSignInAccount? googleUser = await GoogleSignIn.instance
+        .authenticate();
+    GoogleSignInAuthentication? googleAuth = await googleUser.authentication;
 
     final AuthCredential credential = GoogleAuthProvider.credential(
-      idToken: googleAuth?.idToken,
+      idToken: googleAuth.idToken,
     );
-    UserCredential? cred = await _firebaseauth?.signInWithCredential(
+    UserCredential? cred = await FirebaseAuth.instance.signInWithCredential(
       credential,
     );
 
