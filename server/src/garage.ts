@@ -17,7 +17,7 @@ export class Garage {
   lock = false;
   lastUrl: string;
 
-  pin = new onoff.Gpio(Garage.DOOR_PIN, 'out');
+  pin = new onoff.Gpio(Garage.DOOR_PIN, 'high');
 
   @Inject()
   s3: S3ModelService;
@@ -29,9 +29,9 @@ export class Garage {
   async triggerDoor(action?: string) {
     console.log('[Door] Triggering', action);
 
-    await this.pin.write(1);
-    await Util.nonBlockingTimeout(1000);
     await this.pin.write(0);
+    await Util.nonBlockingTimeout(1500);
+    await this.pin.write(1);
 
     return { status: 'active' };
   }
