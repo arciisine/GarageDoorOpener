@@ -3,6 +3,7 @@ Description=Garage Door Opener
 
 [Service]
 User=tim
+Environment="TRV_RESOURCES=@,/home/tim/server-resources"
 ExecStart=./garagedoor.sh
 WorkingDirectory=/home/tim/server
 Restart=always
