@@ -109,16 +109,16 @@ class _GarageInterfaceState extends State<GarageInterface>
   _auth() async {
     GoogleSignInAccount? googleUser = await GoogleSignIn.instance
         .authenticate();
-    GoogleSignInAuthentication? googleAuth = await googleUser.authentication;
+    GoogleSignInAuthentication googleAuth = await googleUser.authentication;
 
     final AuthCredential credential = GoogleAuthProvider.credential(
       idToken: googleAuth.idToken,
     );
-    UserCredential? cred = await FirebaseAuth.instance.signInWithCredential(
+    UserCredential cred = await FirebaseAuth.instance.signInWithCredential(
       credential,
     );
 
-    this.user = cred?.user;
+    this.user = cred.user;
     this.authFuture = null;
   }
 
