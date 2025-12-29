@@ -50,6 +50,7 @@ class _GarageInterfaceState extends State<GarageInterface>
   String? imageUrl;
   User? user;
   Future<void>? authFuture;
+  Stream<DatabaseEvent>? stream;
   StreamSubscription<DatabaseEvent>? subscription;
 
   @override
@@ -57,9 +58,10 @@ class _GarageInterfaceState extends State<GarageInterface>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     DatabaseReference ref = FirebaseDatabase.instance.ref().child('/Image');
-    Stream<DatabaseEvent> stream = ref.onValue;
+    this.stream = ref.onValue;
     // Subscribe to the stream!
-    this.subscription = stream.listen((DatabaseEvent event) {
+    this.subscription = this.stream?.listen((DatabaseEvent event) {
+      print('Image updated : ${event.snapshot.value}');
       this.imageUrl = event.snapshot.value as String?;
     });
   }
@@ -120,11 +122,17 @@ class _GarageInterfaceState extends State<GarageInterface>
       body: new Row(
         children: [
           new Expanded(
-            /*or Column*/
-            child: new Image.network(
-              imageUrl ?? '',
-              fit: BoxFit.fitWidth,
-              gaplessPlayback: true,
+            child: new StreamBuilder<DatabaseEvent>(
+              stream: this.stream,
+              builder: (context, snapshot) {
+                final imageUrl = snapshot.data?.snapshot.value as String?;
+                return new Image.network(
+                  imageUrl ?? '',
+                  key: ValueKey(imageUrl ?? ''),
+                  fit: BoxFit.fitWidth,
+                  gaplessPlayback: true,
+                );
+              },
             ),
           ),
         ],
