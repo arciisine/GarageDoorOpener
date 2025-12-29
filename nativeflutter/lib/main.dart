@@ -68,7 +68,6 @@ class _GarageInterfaceState extends State<GarageInterface>
     with WidgetsBindingObserver {
   static String ip = '192.168.87.42';
 
-  int lastSent = 0;
   String? imageUrl;
   User? user;
   Future<void>? authFuture;
@@ -125,14 +124,9 @@ class _GarageInterfaceState extends State<GarageInterface>
   sendMessage(String key, String value) async {
     await this.auth();
     FirebaseDatabase.instance.ref().child('/${key}').set(value);
-    this.lastSent = DateTime.now().millisecondsSinceEpoch;
   }
 
   Future<void> trigger() async {
-    if (DateTime.now().millisecondsSinceEpoch < (this.lastSent + 1000)) {
-      // Don't double send
-      return;
-    }
     try {
       await this.sendMessage(
         'Activate',
