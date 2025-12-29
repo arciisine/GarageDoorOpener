@@ -10,3 +10,4 @@ native/report/
 native-bk/
 .trv/
 dist/
+server/*.zip
