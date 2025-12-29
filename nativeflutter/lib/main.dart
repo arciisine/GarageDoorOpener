@@ -1,3 +1,7 @@
+import 'firebase_options.dart';
+import 'dart:async';
+
+import 'package:GarageDoorOpener/cross_fade.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/services.dart';
@@ -5,8 +9,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'firebase_options.dart';
-import 'dart:async';
 import 'package:rxdart/transformers.dart';
 
 void main() async {
@@ -123,16 +125,7 @@ class _GarageInterfaceState extends State<GarageInterface>
     return Scaffold(
       body: new Row(
         children: [
-          new Expanded(
-            child: new StreamBuilder<Image>(
-              stream: this.stream,
-              builder: (context, snapshot) {
-                return snapshot.hasData
-                    ? snapshot.data!
-                    : Center(child: CircularProgressIndicator());
-              },
-            ),
-          ),
+          new Expanded(child: TrueImageCrossFade(imageStream: this.stream!)),
         ],
       ),
       floatingActionButton: FloatingActionButton(
