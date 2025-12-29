@@ -3,8 +3,7 @@ import * as firebaseAuth from 'firebase/auth';
 import * as firebaseDb from 'firebase/database';
 
 import { Inject, Injectable, InjectableFactory } from '@travetto/di';
-import { Cache } from '@travetto/cache';
-import type { MemoryModelService } from '@travetto/model-memory';
+import { Cache, type CacheService } from '@travetto/cache';
 import { RuntimeResources } from '@travetto/runtime';
 
 import { Garage } from './garage';
@@ -25,7 +24,7 @@ class GetFirebaseDb {
 export class FirebaseListener {
 
   @Inject()
-  store: MemoryModelService;
+  store: CacheService;
 
   @Inject()
   db: firebaseDb.Database;
