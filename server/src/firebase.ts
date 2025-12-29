@@ -48,7 +48,7 @@ export class FirebaseListener {
     setTimeout(() => { this.ready = true; }, 3000);
   }
 
-  @Cache('store', '2s', { key: (item: firebaseDb.DataSnapshot) => item.key ?? 'unknown' })
+  @Cache('store', 200, { key: (item: firebaseDb.DataSnapshot) => item.key ?? 'unknown' })
   async onUpdate(item: firebaseDb.DataSnapshot): Promise<number> {
     console.log('[Firebase] Received', { key: item.key, value: (item.exists() ? item.val().value : null), ready: this.ready });
     if (!item || item.key !== 'Activate' || !item.exists() || !this.ready) {
