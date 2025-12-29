@@ -4,13 +4,13 @@ Description=Garage Door Opener
 [Service]
 User=tim
 Environment="TRV_RESOURCES=@,/home/tim/server-resources"
-ExecStart=./garagedoor.sh
+ExecStart=/home/tim/server/garage-door-server.sh
 WorkingDirectory=/home/tim/server
 Restart=always
 RestartSec=10
 StandardOutput=syslog
 StandardError=syslog
-SyslogIdentifier=garage-door-opener
+SyslogIdentifier=garage-door
 
 [Install]
 WantedBy=multi-user.target
