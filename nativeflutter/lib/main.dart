@@ -72,6 +72,7 @@ class _GarageInterfaceState extends State<GarageInterface>
   String? imageUrl;
   User? user;
   Future<void>? authFuture;
+  StreamSubscription<DatabaseEvent>? subscription;
 
   @override
   void initState() {
@@ -80,7 +81,7 @@ class _GarageInterfaceState extends State<GarageInterface>
     DatabaseReference ref = FirebaseDatabase.instance.ref().child('/Image');
     Stream<DatabaseEvent> stream = ref.onValue;
     // Subscribe to the stream!
-    stream.listen((DatabaseEvent event) {
+    this.subscription = stream.listen((DatabaseEvent event) {
       this.imageUrl = event.snapshot.value as String?;
     });
   }
@@ -89,6 +90,7 @@ class _GarageInterfaceState extends State<GarageInterface>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+    this.subscription?.cancel();
   }
 
   auth() async {
