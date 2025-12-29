@@ -60,4 +60,7 @@ class DefaultFirebaseOptions {
     databaseURL: 'https://garagedoorapp-1d1fe.firebaseio.com',
     storageBucket: 'garagedoorapp-1d1fe.firebasestorage.app',
   );
+
+  static const FirebaseServerClientId =
+      '955528203315-dg7g8bgt1k0aqqirvc3n3s53d52npg0f.apps.googleusercontent.com';
 }
