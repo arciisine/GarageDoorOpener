@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'firebase_options.dart';
 import 'dart:async';
+import 'package:rxdart/transformers.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -50,14 +51,22 @@ class _GarageInterfaceState extends State<GarageInterface>
   String? imageUrl;
   User? user;
   Future<void>? authFuture;
-  Stream<DatabaseEvent>? stream;
+  Stream<Image>? stream;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     DatabaseReference ref = FirebaseDatabase.instance.ref().child('/Image');
-    this.stream = ref.onValue;
+    this.stream = ref.onValue
+        .throttleTime(Duration(milliseconds: 500), trailing: true)
+        .asyncMap((DatabaseEvent event) async {
+          final imageUrl = event.snapshot.value as String;
+          Uint8List bytes = (await NetworkAssetBundle(
+            Uri.parse(imageUrl),
+          ).load(imageUrl)).buffer.asUint8List();
+          return Image.memory(bytes, fit: BoxFit.fitWidth);
+        });
   }
 
   @override
@@ -115,16 +124,12 @@ class _GarageInterfaceState extends State<GarageInterface>
       body: new Row(
         children: [
           new Expanded(
-            child: new StreamBuilder<DatabaseEvent>(
+            child: new StreamBuilder<Image>(
               stream: this.stream,
               builder: (context, snapshot) {
-                final imageUrl = snapshot.data?.snapshot.value as String?;
-                return new Image.network(
-                  imageUrl ?? '',
-                  key: ValueKey(imageUrl ?? ''),
-                  fit: BoxFit.fitWidth,
-                  gaplessPlayback: true,
-                );
+                return snapshot.hasData
+                    ? snapshot.data!
+                    : Center(child: CircularProgressIndicator());
               },
             ),
           ),
