@@ -78,7 +78,7 @@ class _GarageInterfaceState extends State<GarageInterface>
           Uint8List bytes = (await NetworkAssetBundle(
             Uri.parse(imageUrl),
           ).load(imageUrl)).buffer.asUint8List();
-          return Image.memory(bytes, fit: BoxFit.fitWidth);
+          return Image.memory(bytes, fit: BoxFit.fill);
         });
   }
 
