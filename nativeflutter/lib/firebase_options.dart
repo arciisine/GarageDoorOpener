@@ -54,7 +54,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyB5dc_NWoumgscZIYEkw_WQIFCbXZq0pzY',
-    appId: '1:955528203315:android:aaa62f6a39f84a6ffda746',
+    appId: '1:955528203315:android:31762c1d8729e339',
     messagingSenderId: '955528203315',
     projectId: 'garagedoorapp-1d1fe',
     databaseURL: 'https://garagedoorapp-1d1fe.firebaseio.com',

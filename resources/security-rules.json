@@ -1,6 +1,10 @@
 {
   "rules": {
     ".read": true,
-    ".write": "auth != null && (root.child('Whitelist').hasChild(auth.token.email.replace('.', '_')) || root.child('Whitelist').hasChild(auth.uid.replace('.', '_')))"
+    ".write": "auth != null && (root.child('Whitelist').hasChild(auth.token.email.replace('.', '_')) || root.child('Whitelist').hasChild(auth.uid.replace('.', '_')))",
+    "Image": {
+      ".read": "auth != null && (root.child('Whitelist').hasChild(auth.token.email.replace('.', '_')) || root.child('Whitelist').hasChild(auth.uid.replace('.', '_')))",
+      ".write": true
+    }
   }
 }
