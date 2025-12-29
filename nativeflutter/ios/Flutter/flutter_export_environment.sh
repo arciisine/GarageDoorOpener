@@ -1,7 +1,7 @@
 #!/bin/sh
 # This is a generated file; do not edit or check into version control.
-export "FLUTTER_ROOT=/home/tim/snap/flutter/common/flutter"
-export "FLUTTER_APPLICATION_PATH=/home/tim/Code/arciisine/GarageDoorOpener/nativeflutter"
+export "FLUTTER_ROOT=/Users/arcsine/Code/flutter"
+export "FLUTTER_APPLICATION_PATH=/Users/arcsine/Code/GarageDoorOpener/nativeflutter"
 export "COCOAPODS_PARALLEL_CODE_SIGN=true"
 export "FLUTTER_TARGET=lib/main.dart"
 export "FLUTTER_BUILD_DIR=build"
