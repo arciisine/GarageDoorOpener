@@ -54,11 +54,22 @@ class _GarageInterfaceState extends State<GarageInterface>
   User? user;
   Future<void>? authFuture;
   Stream<Image>? stream;
+  StreamSubscription<User?>? authSubscription;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+
+    // Listen to auth state changes for persistence
+    authSubscription = FirebaseAuth.instance.authStateChanges().listen((
+      User? user,
+    ) {
+      setState(() {
+        this.user = user;
+      });
+    });
+
     DatabaseReference ref = FirebaseDatabase.instance.ref().child('/Image');
     this.stream = ref.onValue
         .throttleTime(Duration(milliseconds: 500), trailing: true)
@@ -73,6 +84,7 @@ class _GarageInterfaceState extends State<GarageInterface>
 
   @override
   void dispose() {
+    authSubscription?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
