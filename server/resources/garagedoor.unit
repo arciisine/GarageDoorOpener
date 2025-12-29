@@ -5,7 +5,7 @@ After=network.target
 [Service]
 Type=simple
 User=tim
-ExecStart=/usr/bin/node /home/tim/server/garagedoor.js
+ExecStart=/home/tim/server/garagedoor.sh
 Restart=on-failure
 
 [Install]
