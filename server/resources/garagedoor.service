@@ -2,15 +2,14 @@
 Description=Garage Door Opener
 
 [Service]
-ExecStart=/usr/bin/npm run server
+User=tim
+ExecStart=./garagedoor.sh
 WorkingDirectory=/home/tim/server
 Restart=always
 RestartSec=10
 StandardOutput=syslog
 StandardError=syslog
 SyslogIdentifier=garage-door-opener
-User=root
-#Group=<alternate group>
 
 [Install]
 WantedBy=multi-user.target
