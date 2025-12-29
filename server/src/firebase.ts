@@ -5,9 +5,9 @@ import * as firebaseDb from 'firebase/database';
 import { Inject, Injectable, InjectableFactory } from '@travetto/di';
 import { Cache } from '@travetto/cache';
 import type { MemoryModelService } from '@travetto/model-memory';
+import { RuntimeResources } from '@travetto/runtime';
 
 import { Garage } from './garage';
-import { RuntimeResources } from '@travetto/runtime';
 
 class GetFirebaseDb {
   @InjectableFactory()
