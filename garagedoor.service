@@ -3,7 +3,7 @@ Description=Garage Door Opener
 
 [Service]
 ExecStart=/usr/bin/npm run server
-WorkingDirectory=/home/pi/server
+WorkingDirectory=/home/tim/server
 Restart=always
 RestartSec=10
 StandardOutput=syslog

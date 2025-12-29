@@ -70,26 +70,24 @@ class _GarageInterfaceState extends State<GarageInterface>
   static String appId = 'garagedoorapp-1d1fe.appspot.com';
   static const platform = const MethodChannel('app.channel.shared.intent');
 
-  static getImageUrl() {
-    return FirebaseDatabase.instance.reference().child('/Image').once().then((DataSnapshot snapshot) {
-      return snapshot.value as String;
-    });
-  }
-
   int lastSent = 0;
   String? imageUrl;
 
   GoogleSignIn? _googleSignIn;
   FirebaseAuth? _firebaseauth;
   User? user;
-  Timer? _timer;
   Future<void>? authFuture;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    this.imageUrl = getImageUrl();
+    DatabaseReference ref = FirebaseDatabase.instance.reference().child('/Image');
+    Stream<DatabaseEvent> stream = ref.onValue;
+    // Subscribe to the stream!
+    stream.listen((DatabaseEvent event) {
+      this.imageUrl = event.snapshot;
+    });
     checkIntent();
   }
 
@@ -101,30 +99,8 @@ class _GarageInterfaceState extends State<GarageInterface>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    print('Did CHange App Lifecycle State ${state}\n');
     if (state == AppLifecycleState.resumed) {
       checkIntent();
-      runSnapshot();
-    } else {
-      stopSnapshot();
-    }
-  }
-
-  stopSnapshot() {
-    if (_timer != null) {
-      var old = _timer;
-      _timer = null;
-      old?.cancel();
-    }
-  }
-
-  runSnapshot() {
-    if (_timer == null) {
-      _timer = Timer.periodic(Duration(seconds: 2), (timer) {
-        setState(() {
-          imageUrl = getImageUrl();
-        });
-      });
     }
   }
 
@@ -189,8 +165,6 @@ class _GarageInterfaceState extends State<GarageInterface>
 
   @override
   Widget build(BuildContext context) {
-    runSnapshot();
-
     // This method is rerun every time setState is called, for instance as done
     // by the _incrementCounter method above.
     //
