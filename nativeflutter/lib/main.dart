@@ -66,7 +66,7 @@ class GarageInterface extends StatefulWidget {
 
 class _GarageInterfaceState extends State<GarageInterface>
     with WidgetsBindingObserver {
-  static String ip = '192.168.1.168';
+  static String ip = '192.168.87.42';
 
   int lastSent = 0;
   String? imageUrl;
