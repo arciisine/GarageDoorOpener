@@ -1,6 +1,7 @@
 {
   "name": "garagedooropener",
   "version": "1.0.0",
+  "type": "module",
   "description": "* Raspberry PI * Camera Module * mjpeg stream support",
   "homepage": "https://github.com/arciisine/GarageDoorOpener#readme",
   "bugs": {
@@ -15,7 +16,6 @@
   },
   "license": "ISC",
   "author": "",
-  "type": "commonjs",
   "main": "index.js",
   "devDependencies": {
     "@travetto/compiler": "^7.0.0-rc.0",
