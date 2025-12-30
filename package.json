@@ -20,7 +20,7 @@
   "devDependencies": {
     "@travetto/compiler": "^7.0.0-rc.0",
     "@travetto/eslint": "^7.0.0-rc.0",
-    "@travetto/pack": "^7.0.0-rc.0",
+    "@travetto/pack": "^7.0.0-rc.5",
     "@travetto/repo": "^7.0.0-rc.0",
     "@travetto/test": "^7.0.0-rc.0"
   },
