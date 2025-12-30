@@ -10,6 +10,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:rxdart/transformers.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -55,6 +56,7 @@ class _GarageInterfaceState extends State<GarageInterface>
   Future<void>? authFuture;
   Stream<Image>? stream;
   StreamSubscription<User?>? authSubscription;
+  StreamSubscription<List<ConnectivityResult>>? connectivitySubscription;
 
   @override
   void initState() {
@@ -68,6 +70,15 @@ class _GarageInterfaceState extends State<GarageInterface>
       setState(() {
         this.user = user;
       });
+    });
+
+    // Reset connection on connectivity changes
+    connectivitySubscription = Connectivity().onConnectivityChanged.listen((
+      List<ConnectivityResult> result,
+    ) async {
+      print("Connectivity changed, resetting connection");
+      await FirebaseDatabase.instance.goOffline();
+      await FirebaseDatabase.instance.goOnline();
     });
 
     DatabaseReference ref = FirebaseDatabase.instance.ref().child('/Image');
@@ -85,6 +96,7 @@ class _GarageInterfaceState extends State<GarageInterface>
   @override
   void dispose() {
     authSubscription?.cancel();
+    connectivitySubscription?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
