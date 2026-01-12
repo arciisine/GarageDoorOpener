@@ -4,10 +4,12 @@ import * as firebaseDb from 'firebase/database';
 
 import { Inject, Injectable, InjectableFactory } from '@travetto/di';
 import { Cache, CacheModelSymbol, type CacheService } from '@travetto/cache';
-import { RuntimeResources } from '@travetto/runtime';
+import { RuntimeResources, TimeUtil } from '@travetto/runtime';
 import { MemoryModelConfig, MemoryModelService } from '@travetto/model-memory';
 
 import { Garage } from './garage';
+
+const STARTUP_DELAY = TimeUtil.asMillis('3s')
 
 class GetFirebaseDb {
   @InjectableFactory()
@@ -37,25 +39,23 @@ export class FirebaseListener {
   @Inject()
   garage: Garage;
 
-  ready = false;
+  start = Date.now();
 
   async postConstruct() {
     console.log('[Firebase] Listening');
     const ref = firebaseDb.ref(this.db);
-    const q = firebaseDb.query(ref, firebaseDb.orderByKey());
-    firebaseDb.onChildAdded(q, (item) => this.onUpdate(item));
-    firebaseDb.onChildChanged(q, (item) => this.onUpdate(item));
-    setTimeout(() => { this.ready = true; }, 3000);
+    const query = firebaseDb.query(ref, firebaseDb.orderByKey());
+    firebaseDb.onChildAdded(query, item => this.onUpdate(item));
+    firebaseDb.onChildChanged(query, item => this.onUpdate(item));
   }
 
   @Cache('store', 200, { key: (item: firebaseDb.DataSnapshot) => item.key ?? 'unknown' })
   async onUpdate(item: firebaseDb.DataSnapshot): Promise<number> {
-    console.log('[Firebase] Received', { key: item.key, value: (item.exists() ? item.val().value : null), ready: this.ready });
-    if (!item || item.key !== 'Activate' || !item.exists() || !this.ready) {
-      return Date.now();
+    const now = Date.now();
+    console.log('[Firebase] Received', { key: item.key, value: (item.exists() ? item.val().value : null) });
+    if ((now - this.start) >= STARTUP_DELAY && item && item.key === 'Activate' && item.exists()) {
+      await this.garage.triggerDoor(item.val().value);
     }
-    await this.garage.triggerDoor(item.val().value);
-
-    return Date.now();
+    return now;
   }
 }
