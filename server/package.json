@@ -11,20 +11,20 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@travetto/cache": "^7.0.0",
-    "@travetto/cli": "^7.0.0",
-    "@travetto/di": "^7.0.0",
-    "@travetto/model-memory": "^7.0.0",
-    "@travetto/model-s3": "^7.0.0",
-    "@travetto/runtime": "^7.0.0",
-    "@travetto/web": "^7.0.0",
-    "@travetto/web-http": "^7.0.0",
+    "@travetto/cache": "^7.0.6",
+    "@travetto/cli": "^7.0.8",
+    "@travetto/di": "^7.0.6",
+    "@travetto/model-memory": "^7.0.6",
+    "@travetto/model-s3": "^7.0.7",
+    "@travetto/runtime": "^7.0.5",
+    "@travetto/web": "^7.0.6",
+    "@travetto/web-http": "^7.0.6",
     "firebase": "^12.7.0",
     "onoff": "^6.0.3"
   },
   "devDependencies": {
-    "@travetto/compiler": "^7.0.0",
-    "@travetto/pack": "^7.0.0",
-    "@travetto/test": "^7.0.0"
+    "@travetto/compiler": "^7.0.6",
+    "@travetto/pack": "^7.0.5",
+    "@travetto/test": "^7.0.6"
   }
 }
