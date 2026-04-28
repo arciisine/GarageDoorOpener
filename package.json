@@ -18,14 +18,14 @@
   "author": "",
   "main": "index.js",
   "devDependencies": {
-    "@travetto/compiler": "^7.0.6",
-    "@travetto/eslint": "^7.0.5",
-    "@travetto/pack": "^7.0.5",
-    "@travetto/repo": "^7.0.7",
-    "@travetto/test": "^7.0.6"
+    "@travetto/compiler": "^8.0.0-alpha.0",
+    "@travetto/eslint": "^8.0.0-alpha.0",
+    "@travetto/pack": "^8.0.0-alpha.0",
+    "@travetto/repo": "^8.0.0-alpha.0",
+    "@travetto/test": "^8.0.0-alpha.0"
   },
   "dependencies": {
-    "@travetto/cli": "^7.0.8"
+    "@travetto/cli": "^8.0.0-alpha.0"
   },
   "scripts": {
     "test": "trv test",
