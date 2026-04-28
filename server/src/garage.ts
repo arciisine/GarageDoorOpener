@@ -1,4 +1,5 @@
-import fs from 'node:fs';
+import { createReadStream } from 'node:fs';
+import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import onoff from 'onoff';
@@ -14,7 +15,7 @@ export class Garage {
 
   static DOOR_PIN = 515;
 
-  lock = false;
+  lock = 0;
   lastUrl: string;
 
   pin = new onoff.Gpio(Garage.DOOR_PIN, 'high');
@@ -36,27 +37,32 @@ export class Garage {
     return { status: 'active' };
   }
 
+  @Post('/restart')
+  async restart() {
+    await firebaseDb.remove(firebaseDb.ref(this.db, '/Restart'));
+    process.exit(200);
+  }
+
   @Post('/snapshot')
   async snapshot(@QueryParam() img: string) {
-    if (this.lock) {
+    if (this.lock && (Date.now() - this.lock) < 10000) { // Only let lock last 10 seconds
       console.log('[Snapshot] Skipped');
     } else {
-
       try {
+        this.lock = Date.now();
         console.log('[Snapshot] Starting', { img });
-        this.lock = true;
         const pathName = `/images/${path.basename(img)}`;
-        await this.s3.upsertBlob(pathName, fs.createReadStream(img));
+        await this.s3.upsertBlob(pathName, createReadStream(img));
         this.lastUrl = await this.s3.getBlobReadUrl(pathName, '1h');
         const ref = firebaseDb.ref(this.db, '/Image');
         firebaseDb.set(ref, this.lastUrl);
       } catch (e) {
         console.log('[Snapshot] Failed', e);
       } finally {
-        this.lock = false;
+        await fs.unlink(img).catch(() => { });
+        this.lock = 0;
       }
-
-      return this.lastUrl;
     }
+    return this.lastUrl;
   }
 }

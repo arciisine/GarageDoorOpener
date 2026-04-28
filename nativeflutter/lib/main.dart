@@ -144,6 +144,20 @@ class _GarageInterfaceState extends State<GarageInterface>
     }
   }
 
+  Future<void> restart() async {
+    try {
+      await this.sendMessage(
+        'Restart',
+        '${DateTime.now().millisecondsSinceEpoch}',
+      );
+    } catch (e) {
+      print("Failed to write");
+      print(e);
+      // fallback if firebase is down
+      await http.post(Uri.http(ip, '/restart'));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
