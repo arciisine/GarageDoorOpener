@@ -2,10 +2,10 @@ import * as firebase from 'firebase/app';
 import * as firebaseAuth from 'firebase/auth';
 import * as firebaseDb from 'firebase/database';
 
-import { InjectableFactory } from '@travetto/di';
 import { CacheModelSymbol } from '@travetto/cache';
+import { InjectableFactory } from '@travetto/di';
+import { type MemoryModelConfig, MemoryModelService } from '@travetto/model-memory';
 import { JSONUtil, RuntimeResources } from '@travetto/runtime';
-import { MemoryModelConfig, MemoryModelService } from '@travetto/model-memory';
 
 class GetFirebaseDb {
   @InjectableFactory()

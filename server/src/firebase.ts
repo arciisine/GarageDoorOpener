@@ -1,20 +1,19 @@
 import * as firebaseDb from 'firebase/database';
 
-import { Inject, Injectable } from '@travetto/di';
 import { Cache, type CacheService } from '@travetto/cache';
+import { Inject, Injectable } from '@travetto/di';
 import { TimeUtil } from '@travetto/runtime';
 
-import { Garage } from './garage';
+import type { Garage } from './garage';
 
 const STARTUP_DELAY = TimeUtil.fromNow('3s').getTime();
 
 function logItem(item: firebaseDb.DataSnapshot) {
-  console.log('[Firebase] Received', { key: item.key, value: (item.exists() ? item.val().value : null) });
+  console.log('[Firebase] Received', { key: item.key, value: item.exists() ? item.val().value : null });
 }
 
 @Injectable({ autoInject: true })
 export class FirebaseListener {
-
   @Inject()
   store: CacheService;
 

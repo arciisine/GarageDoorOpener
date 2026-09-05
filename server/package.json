@@ -1,15 +1,15 @@
 {
   "name": "garage-door-server",
   "version": "1.0.0",
-  "type": "module",
   "description": "",
+  "license": "ISC",
+  "author": "",
+  "type": "module",
   "scripts": {
     "test": " npx trv test",
     "server": "npx trv web:http -cr",
     "pack": "npx trv pack:zip -o 'dist/garage-door-server.zip' -np epoll web:http"
   },
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "@travetto/cache": "^8.0.1",
     "@travetto/cli": "^8.0.1",
