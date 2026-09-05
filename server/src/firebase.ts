@@ -1,7 +1,7 @@
 import * as firebaseDb from 'firebase/database';
 
 import { Cache, type CacheService } from '@travetto/cache';
-import { Inject, Injectable } from '@travetto/di';
+import { Inject, Injectable, PostConstruct } from '@travetto/di';
 import { TimeUtil } from '@travetto/runtime';
 
 import type { Garage } from './garage';
@@ -25,6 +25,7 @@ export class FirebaseListener {
 
   start = Date.now();
 
+  @PostConstruct()
   async postConstruct() {
     console.log('[Firebase] Listening');
     const ref = firebaseDb.ref(this.db);
