@@ -8,12 +8,13 @@
   "scripts": {
     "test": " npx trv test",
     "server": "npx trv web:http -cr",
-    "pack": "npx trv pack:zip -o 'dist/garage-door-server.zip' -np epoll -np node-forge web:http"
+    "pack": "npx trv pack:zip --no-minify -sm -o 'dist/garage-door-server.zip' -np epoll -np node-forge web:http"
   },
   "dependencies": {
     "@travetto/cache": "^8.0.1",
     "@travetto/cli": "^8.0.1",
     "@travetto/di": "^8.0.1",
+    "@travetto/image": "^8.0.1",
     "@travetto/model-memory": "^8.0.1",
     "@travetto/model-s3": "^8.0.1",
     "@travetto/runtime": "^8.0.1",

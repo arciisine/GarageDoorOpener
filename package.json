@@ -19,7 +19,7 @@
   "main": "index.js",
   "devDependencies": {
     "@travetto/compiler": "^8.0.1",
-    "@travetto/lint": "^8.0.0",
+    "@travetto/lint": "^8.0.1",
     "@travetto/pack": "^8.0.1",
     "@travetto/repo": "^8.0.1",
     "@travetto/test": "^8.0.1"
