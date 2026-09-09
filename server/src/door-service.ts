@@ -136,7 +136,7 @@ export class DoorService {
 
       const serviceAccountPath = await RuntimeResources.resolve('service-account.json').catch(() => undefined);
       if (serviceAccountPath) {
-        const serviceAccount = JSONUtil.fromUTF8(await RuntimeResources.readUTF8('service-account.json'));
+        const serviceAccount: Parameters<typeof cert>[0] = JSONUtil.fromUTF8(await RuntimeResources.readUTF8('service-account.json'));
         initializeApp({
           credential: cert(serviceAccount)
         });
