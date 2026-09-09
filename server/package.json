@@ -21,6 +21,7 @@
     "@travetto/web": "^8.0.1",
     "@travetto/web-http": "^8.0.1",
     "firebase": "^12.18.0",
+    "firebase-admin": "^14.3.0",
     "onoff": "^6.0.3",
     "temporal-polyfill-lite": "^0.4.3"
   },
