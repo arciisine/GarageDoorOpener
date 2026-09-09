@@ -5,6 +5,14 @@
     "Image": {
       ".read": "auth != null && (root.child('Whitelist').hasChild(auth.token.email.replace('.', '_')) || root.child('Whitelist').hasChild(auth.uid.replace('.', '_')))",
       ".write": true
+    },
+    "DoorState": {
+      ".read": "auth != null && (root.child('Whitelist').hasChild(auth.token.email.replace('.', '_')) || root.child('Whitelist').hasChild(auth.uid.replace('.', '_')))",
+      ".write": true
+    },
+    "Whitelist": {
+      ".write": "auth != null && (root.child('Whitelist').hasChild(auth.token.email.replace('.', '_')) || root.child('Whitelist').hasChild(auth.uid.replace('.', '_')))",
+      ".read": true
     }
   }
 }
