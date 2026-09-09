@@ -11,6 +11,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:rxdart/transformers.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -57,11 +58,13 @@ class _GarageInterfaceState extends State<GarageInterface>
   Stream<Image>? stream;
   StreamSubscription<User?>? authSubscription;
   StreamSubscription<List<ConnectivityResult>>? connectivitySubscription;
+  StreamSubscription<RemoteMessage>? messageSubscription;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    this._initializeFirebaseMessaging();
 
     // Listen to auth state changes for persistence
     authSubscription = FirebaseAuth.instance.authStateChanges().listen((
@@ -93,10 +96,38 @@ class _GarageInterfaceState extends State<GarageInterface>
         });
   }
 
+  Future<void> _initializeFirebaseMessaging() async {
+    try {
+      final messaging = FirebaseMessaging.instance;
+
+      final notificationSettings = await messaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+
+      if (notificationSettings.authorizationStatus ==
+              AuthorizationStatus.authorized ||
+          notificationSettings.authorizationStatus ==
+              AuthorizationStatus.provisional) {
+        await messaging.subscribeToTopic('garage_door_alerts');
+        print('Subscribed to garage_door_alerts topic');
+      }
+
+      this.messageSubscription =
+          FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        print('Foreground message received: ${message.notification?.title} - ${message.notification?.body}');
+      });
+    } catch (error) {
+      print('Firebase Messaging initialization error: $error');
+    }
+  }
+
   @override
   void dispose() {
     authSubscription?.cancel();
     connectivitySubscription?.cancel();
+    messageSubscription?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
