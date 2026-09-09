@@ -1,16 +1,17 @@
 import assert from 'node:assert';
 
-import { RuntimeResources } from '@travetto/runtime';
-import { Suite, Test } from '@travetto/test';
+import { Suite, Test, TestFixtures } from '@travetto/test';
 
 import { DoorService } from '../src/door-service';
 
 @Suite()
 export class DoorServiceTest {
+  fixtures = new TestFixtures();
+
   @Test()
   async verifyClosedDoorDetection(): Promise<void> {
     const service = new DoorService();
-    const sampleImagePath = await RuntimeResources.resolve('closed-door-sample.jpg');
+    const sampleImagePath = await this.fixtures.resolve('closed-door-sample.jpg');
 
     const detectionResult = await service.inspectImage(sampleImagePath);
 
@@ -23,12 +24,24 @@ export class DoorServiceTest {
   @Test()
   async verifyOpenDoorAtSunsetDetection(): Promise<void> {
     const service = new DoorService();
-    const sampleImagePath = await RuntimeResources.resolve('open-door-sunset-sample.png');
+    const sampleImagePath = await this.fixtures.resolve('open-door-sunset-sample.png');
 
     const detectionResult = await service.inspectImage(sampleImagePath);
 
     assert.strictEqual(detectionResult.isClosed, false);
     assert.ok(detectionResult.standardDeviation > 25, 'Standard deviation should be high due to outdoor scene texture');
+  }
+
+  @Test()
+  async verifyOpenDoorAtNightDetection(): Promise<void> {
+    const service = new DoorService();
+    const sampleImagePath = await this.fixtures.resolve('open-door-night-sample.jpg');
+
+    const detectionResult = await service.inspectImage(sampleImagePath);
+
+    assert.strictEqual(detectionResult.isClosed, false);
+    assert.strictEqual(detectionResult.reason, 'Nighttime open void detected (low luminance)');
+    assert.ok(detectionResult.meanLuminance < 35, 'Mean luminance should be low for nighttime open door void');
   }
 
   @Test()

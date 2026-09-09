@@ -77,22 +77,22 @@ export class DoorService {
 
     const averageStandardDeviation = (redChannel.stdev + greenChannel.stdev + blueChannel.stdev) / 3;
 
-    // 1. Daytime Open: camera provides vivid color from daylight and outdoor scene
-    if (saturationPercentage > 25) {
+    // 1. Nighttime Open: IR light dissipates outdoors without reflecting back
+    if (meanLuminance < 35) {
       return {
         isClosed: false,
-        reason: 'Daylight color detected (high saturation)',
+        reason: 'Nighttime open void detected (low luminance)',
         saturationPercentage,
         meanLuminance,
         standardDeviation: averageStandardDeviation
       };
     }
 
-    // 2. Nighttime Open: IR light dissipates outdoors without reflecting back
-    if (meanLuminance < 35) {
+    // 2. Daytime Open: camera provides vivid color from daylight and outdoor scene
+    if (saturationPercentage > 25) {
       return {
         isClosed: false,
-        reason: 'Nighttime open void detected (low luminance)',
+        reason: 'Daylight color detected (high saturation)',
         saturationPercentage,
         meanLuminance,
         standardDeviation: averageStandardDeviation
