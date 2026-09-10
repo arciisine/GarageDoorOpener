@@ -1,5 +1,5 @@
-import { cert, getApps, initializeApp } from 'firebase-admin/app';
-import { getMessaging } from 'firebase-admin/messaging';
+import { cert, getApps, initializeApp, type App } from 'firebase-admin/app';
+import { getMessaging, type Messaging } from 'firebase-admin/messaging';
 import * as firebaseDb from 'firebase/database';
 import sharp from 'sharp';
 
@@ -28,6 +28,9 @@ export class DoorService {
   @Inject()
   database: firebaseDb.Database;
 
+  app: App;
+  messaging: Messaging;
+
   lastAlertTimestamp = 0;
 
   /**
@@ -51,6 +54,23 @@ export class DoorService {
       }
     } catch {
       // Fall back to in-memory tracking if offline or uninitialized
+    }
+
+    try {
+      if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+        this.app = initializeApp();
+      } else {
+        const serviceAccountPath = await RuntimeResources.resolve('service-account.json').catch(() => undefined);
+        if (serviceAccountPath) {
+          const serviceAccount: Parameters<typeof cert>[0] = JSONUtil.fromUTF8(await RuntimeResources.readUTF8('service-account.json'));
+          this.app = initializeApp({
+            credential: cert(serviceAccount)
+          });
+        }
+      }
+      this.messaging = getMessaging(this.app);
+    } catch (initializationError) {
+      console.log('[Door Alert] Firebase Admin initialization skipped:', initializationError);
     }
   }
 
@@ -121,35 +141,6 @@ export class DoorService {
   }
 
   /**
-   * Initializes Firebase Admin if service account credentials or environment variables are available.
-   */
-  async initializeFirebaseAdmin(): Promise<boolean> {
-    if (getApps().length > 0) {
-      return true;
-    }
-
-    try {
-      if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-        initializeApp();
-        return true;
-      }
-
-      const serviceAccountPath = await RuntimeResources.resolve('service-account.json').catch(() => undefined);
-      if (serviceAccountPath) {
-        const serviceAccount: Parameters<typeof cert>[0] = JSONUtil.fromUTF8(await RuntimeResources.readUTF8('service-account.json'));
-        initializeApp({
-          credential: cert(serviceAccount)
-        });
-        return true;
-      }
-    } catch (initializationError) {
-      console.log('[Door Alert] Firebase Admin initialization skipped:', initializationError);
-    }
-
-    return false;
-  }
-
-  /**
    * Dispatches the late-night open alert to Firebase Realtime Database and FCM.
    */
   async dispatchLateNightAlert(timestamp: number, imageUrl?: string): Promise<void> {
@@ -176,45 +167,40 @@ export class DoorService {
 
     // 2. Dispatch FCM Push Notification to topic 'garage_door_alerts'
     try {
-      const isInitialized = await this.initializeFirebaseAdmin();
-      if (isInitialized) {
-        await getMessaging().send({
-          topic: 'garage_door_alerts',
+      await this.messaging.send({
+        topic: 'garage_door_alerts',
+        notification: {
+          title: alertTitle,
+          body: alertBody,
+          ...(imageUrl ? { imageUrl } : {})
+        },
+        data: {
+          title: alertTitle,
+          body: alertBody,
+          doorState: 'open',
+          timestamp: timestamp.toString(),
+          ...(imageUrl ? { imageUrl } : {})
+        },
+        android: {
+          priority: 'high',
           notification: {
-            title: alertTitle,
-            body: alertBody,
-            ...(imageUrl ? { imageUrl } : {})
-          },
-          data: {
-            title: alertTitle,
-            body: alertBody,
-            doorState: 'open',
-            timestamp: timestamp.toString(),
-            ...(imageUrl ? { imageUrl } : {})
-          },
-          android: {
+            channelId: 'garage_door_alerts',
             priority: 'high',
-            notification: {
-              channelId: 'garage_door_alerts',
-              priority: 'high',
-              ...(imageUrl ? { imageUrl } : {})
+            ...(imageUrl ? { imageUrl } : {})
+          }
+        },
+        apns: {
+          payload: {
+            aps: {
+              category: 'GARAGE_DOOR_ALERT'
             }
           },
-          apns: {
-            payload: {
-              aps: {
-                category: 'GARAGE_DOOR_ALERT'
-              }
-            },
-            fcmOptions: {
-              ...(imageUrl ? { imageUrl } : {})
-            }
+          fcmOptions: {
+            ...(imageUrl ? { imageUrl } : {})
           }
-        });
-        console.log('[Door Alert] FCM push notification sent to topic: garage_door_alerts');
-      } else {
-        console.log('[Door Alert] FCM not configured (no service-account.json or GOOGLE_APPLICATION_CREDENTIALS found)');
-      }
+        }
+      });
+      console.log('[Door Alert] FCM push notification sent to topic: garage_door_alerts');
     } catch (messagingError) {
       console.log('[Door Alert] Failed to dispatch FCM push notification', messagingError);
     }
@@ -224,11 +210,7 @@ export class DoorService {
    * Evaluates whether a late-night alert should be triggered.
    * Alerts if the door is open after 9:00 PM EDT, throttled to once every 30 minutes.
    */
-  async evaluateAlert(
-    detectionResult: DoorDetectionResult,
-    timestamp: number = Date.now(),
-    imageUrl?: string
-  ): Promise<boolean> {
+  async evaluateAlert(detectionResult: DoorDetectionResult, timestamp: number = Date.now(), imageUrl?: string): Promise<boolean> {
     if (detectionResult.isClosed) {
       // Reset alert tracking when door is closed
       if (this.lastAlertTimestamp !== 0) {
