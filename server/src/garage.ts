@@ -57,13 +57,13 @@ export class Garage {
         this.lock = Date.now();
         console.log('[Snapshot] Starting', { imagePath });
 
-        await this.doorService.recordDoorState(imagePath);
-
         const pathName = `/images/${path.basename(imagePath)}`;
         await this.s3.upsertBlob(pathName, createReadStream(imagePath));
         this.lastUrl = await this.s3.getBlobReadUrl(pathName, '1h');
         const imageReference = firebaseDb.ref(this.db, '/Image');
         await firebaseDb.set(imageReference, this.lastUrl);
+
+        await this.doorService.recordDoorState(imagePath, this.lastUrl);
       } catch (error) {
         console.log('[Snapshot] Failed', error);
       } finally {

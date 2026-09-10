@@ -113,4 +113,30 @@ export class DoorServiceTest {
     const triggeredAtNineFortyFive = await service.evaluateAlert(openResult, nineFortyFiveTimestamp);
     assert.strictEqual(triggeredAtNineFortyFive, true, 'Should alert immediately if re-opened');
   }
+
+  @Test()
+  async verifyLateNightAlertWithImageUrl(): Promise<void> {
+    const service = new DoorService();
+    const openResult = {
+      isClosed: false,
+      reason: 'Open door detected',
+      saturationPercentage: 10,
+      meanLuminance: 120,
+      standardDeviation: 60
+    };
+
+    const ninePostMeridiemDate = new Date();
+    ninePostMeridiemDate.setHours(21, 10, 0, 0);
+    const timestamp = ninePostMeridiemDate.getTime();
+    const sampleImageUrl = 'https://s3.amazonaws.com/garage/images/sample.jpg';
+
+    let capturedImageUrl: string | undefined;
+    service.dispatchLateNightAlert = async (alertTimestamp: number, imageUrl?: string): Promise<void> => {
+      capturedImageUrl = imageUrl;
+    };
+
+    const triggered = await service.evaluateAlert(openResult, timestamp, sampleImageUrl);
+    assert.strictEqual(triggered, true, 'Should trigger alert');
+    assert.strictEqual(capturedImageUrl, sampleImageUrl, 'Should pass image URL to dispatchLateNightAlert');
+  }
 }

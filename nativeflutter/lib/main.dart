@@ -12,10 +12,122 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:rxdart/transformers.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+
+@pragma('vm:entry-point')
+Future<void> notificationTapBackground(
+    NotificationResponse notificationResponse) async {
+  if (notificationResponse.actionId == 'action_close_door') {
+    await triggerDoorActivation();
+  }
+}
+
+@pragma('vm:entry-point')
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await displayNotificationAlert(message);
+}
+
+Future<void> triggerDoorActivation() async {
+  try {
+    await FirebaseDatabase.instance
+        .ref()
+        .child('/Activate')
+        .set('${DateTime.now().millisecondsSinceEpoch}');
+    print('Door activation triggered via Firebase');
+  } catch (firebaseError) {
+    print('Failed to write activate to Firebase: $firebaseError');
+    try {
+      await http.post(Uri.http(_GarageInterfaceState.ip, '/garage/activate'));
+      print('Door activation triggered via HTTP fallback');
+    } catch (httpError) {
+      print('Failed fallback HTTP trigger: $httpError');
+    }
+  }
+}
+
+Future<void> displayNotificationAlert(RemoteMessage message) async {
+  final FlutterLocalNotificationsPlugin notificationsPlugin =
+      FlutterLocalNotificationsPlugin();
+
+  const AndroidNotificationChannel alertChannel = AndroidNotificationChannel(
+    'garage_door_alerts',
+    'Garage Door Alerts',
+    description: 'Notifications for late-night open garage door alerts',
+    importance: Importance.max,
+  );
+
+  final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
+      notificationsPlugin.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
+  await androidImplementation?.createNotificationChannel(alertChannel);
+
+  final String title =
+      message.notification?.title ?? message.data['title'] ?? 'Garage Door Alert';
+  final String body = message.notification?.body ??
+      message.data['body'] ??
+      'The garage door is still open after 9:00 PM EDT.';
+  final String? snapshotImageUrl =
+      message.notification?.android?.imageUrl ??
+      message.notification?.apple?.imageUrl ??
+      message.data['imageUrl'];
+
+  BigPictureStyleInformation? bigPictureStyleInformation;
+  if (snapshotImageUrl != null && snapshotImageUrl.isNotEmpty) {
+    try {
+      final http.Response imageResponse =
+          await http.get(Uri.parse(snapshotImageUrl)).timeout(
+                const Duration(seconds: 5),
+              );
+      if (imageResponse.statusCode == 200) {
+        bigPictureStyleInformation = BigPictureStyleInformation(
+          ByteArrayAndroidBitmap(imageResponse.bodyBytes),
+          contentTitle: title,
+          summaryText: body,
+        );
+      }
+    } catch (imageDownloadError) {
+      print('Failed to download notification image: $imageDownloadError');
+    }
+  }
+
+  final AndroidNotificationDetails androidNotificationDetails =
+      AndroidNotificationDetails(
+    alertChannel.id,
+    alertChannel.name,
+    channelDescription: alertChannel.description,
+    importance: Importance.max,
+    priority: Priority.high,
+    styleInformation: bigPictureStyleInformation,
+    actions: const <AndroidNotificationAction>[
+      AndroidNotificationAction(
+        'action_close_door',
+        'Close Door',
+        showsUserInterface: true,
+      ),
+      AndroidNotificationAction(
+        'action_dismiss',
+        'Dismiss',
+        cancelNotification: true,
+      ),
+    ],
+  );
+
+  final NotificationDetails notificationDetails =
+      NotificationDetails(android: androidNotificationDetails);
+
+  await notificationsPlugin.show(
+    id: 1001,
+    title: title,
+    body: body,
+    notificationDetails: notificationDetails,
+  );
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   await GoogleSignIn.instance.initialize(
     serverClientId: DefaultFirebaseOptions.FirebaseServerClientId,
   );
@@ -52,6 +164,9 @@ class _GarageInterfaceState extends State<GarageInterface>
     with WidgetsBindingObserver {
   static String ip = '192.168.87.42';
 
+  final FlutterLocalNotificationsPlugin localNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
+
   String? imageUrl;
   User? user;
   Future<void>? authFuture;
@@ -84,20 +199,36 @@ class _GarageInterfaceState extends State<GarageInterface>
       await FirebaseDatabase.instance.goOnline();
     });
 
-    DatabaseReference ref = FirebaseDatabase.instance.ref().child('/Image');
-    this.stream = ref.onValue
+    DatabaseReference databaseReference = FirebaseDatabase.instance.ref().child('/Image');
+    this.stream = databaseReference.onValue
         .throttleTime(Duration(milliseconds: 500), trailing: true)
         .asyncMap((DatabaseEvent event) async {
           final imageUrl = event.snapshot.value as String;
-          Uint8List bytes = (await NetworkAssetBundle(
+          Uint8List imageBytes = (await NetworkAssetBundle(
             Uri.parse(imageUrl),
           ).load(imageUrl)).buffer.asUint8List();
-          return Image.memory(bytes, fit: BoxFit.fill);
+          return Image.memory(imageBytes, fit: BoxFit.fill);
         });
   }
 
   Future<void> _initializeFirebaseMessaging() async {
     try {
+      const AndroidInitializationSettings initializationSettingsAndroid =
+          AndroidInitializationSettings('@mipmap/ic_launcher');
+      const InitializationSettings initializationSettings =
+          InitializationSettings(android: initializationSettingsAndroid);
+
+      await localNotificationsPlugin.initialize(
+        settings: initializationSettings,
+        onDidReceiveNotificationResponse:
+            (NotificationResponse notificationResponse) {
+          if (notificationResponse.actionId == 'action_close_door') {
+            trigger();
+          }
+        },
+        onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
+      );
+
       final messaging = FirebaseMessaging.instance;
 
       final notificationSettings = await messaging.requestPermission(
@@ -115,12 +246,85 @@ class _GarageInterfaceState extends State<GarageInterface>
       }
 
       this.messageSubscription =
-          FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+          FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
         print('Foreground message received: ${message.notification?.title} - ${message.notification?.body}');
+        await displayNotificationAlert(message);
+        if (mounted) {
+          _showInAppDoorAlertDialog(message);
+        }
       });
+
+      FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+        if (mounted) {
+          _showInAppDoorAlertDialog(message);
+        }
+      });
+
+      final RemoteMessage? initialMessage =
+          await messaging.getInitialMessage();
+      if (initialMessage != null && mounted) {
+        _showInAppDoorAlertDialog(initialMessage);
+      }
     } catch (error) {
       print('Firebase Messaging initialization error: $error');
     }
+  }
+
+  void _showInAppDoorAlertDialog(RemoteMessage message) {
+    final String title =
+        message.notification?.title ?? message.data['title'] ?? 'Garage Door Alert';
+    final String body = message.notification?.body ??
+        message.data['body'] ??
+        'The garage door is still open after 9:00 PM EDT.';
+    final String? snapshotImageUrl =
+        message.notification?.android?.imageUrl ??
+        message.notification?.apple?.imageUrl ??
+        message.data['imageUrl'];
+
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: Text(title),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(body),
+                if (snapshotImageUrl != null && snapshotImageUrl.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      snapshotImageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) =>
+                          const SizedBox.shrink(),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+              },
+              child: const Text('Dismiss'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.of(dialogContext).pop();
+                await trigger();
+              },
+              child: const Text('Close Door'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override

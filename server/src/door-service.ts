@@ -152,7 +152,7 @@ export class DoorService {
   /**
    * Dispatches the late-night open alert to Firebase Realtime Database and FCM.
    */
-  async dispatchLateNightAlert(timestamp: number): Promise<void> {
+  async dispatchLateNightAlert(timestamp: number, imageUrl?: string): Promise<void> {
     const alertTitle = 'Garage Door Alert';
     const alertBody = 'The garage door is still open after 9:00 PM EDT.';
 
@@ -165,7 +165,8 @@ export class DoorService {
           body: alertBody,
           timestamp,
           isClosed: false,
-          lastAlertTimestamp: this.lastAlertTimestamp
+          lastAlertTimestamp: this.lastAlertTimestamp,
+          ...(imageUrl ? { imageUrl } : {})
         });
         console.log('[Door Alert] Alert recorded to Firebase Realtime Database under /DoorAlert');
       }
@@ -181,11 +182,33 @@ export class DoorService {
           topic: 'garage_door_alerts',
           notification: {
             title: alertTitle,
-            body: alertBody
+            body: alertBody,
+            ...(imageUrl ? { imageUrl } : {})
           },
           data: {
+            title: alertTitle,
+            body: alertBody,
             doorState: 'open',
-            timestamp: timestamp.toString()
+            timestamp: timestamp.toString(),
+            ...(imageUrl ? { imageUrl } : {})
+          },
+          android: {
+            priority: 'high',
+            notification: {
+              channelId: 'garage_door_alerts',
+              priority: 'high',
+              ...(imageUrl ? { imageUrl } : {})
+            }
+          },
+          apns: {
+            payload: {
+              aps: {
+                category: 'GARAGE_DOOR_ALERT'
+              }
+            },
+            fcmOptions: {
+              ...(imageUrl ? { imageUrl } : {})
+            }
           }
         });
         console.log('[Door Alert] FCM push notification sent to topic: garage_door_alerts');
@@ -201,7 +224,11 @@ export class DoorService {
    * Evaluates whether a late-night alert should be triggered.
    * Alerts if the door is open after 9:00 PM EDT, throttled to once every 30 minutes.
    */
-  async evaluateAlert(detectionResult: DoorDetectionResult, timestamp: number = Date.now()): Promise<boolean> {
+  async evaluateAlert(
+    detectionResult: DoorDetectionResult,
+    timestamp: number = Date.now(),
+    imageUrl?: string
+  ): Promise<boolean> {
     if (detectionResult.isClosed) {
       // Reset alert tracking when door is closed
       if (this.lastAlertTimestamp !== 0) {
@@ -226,7 +253,7 @@ export class DoorService {
 
     if (hasExceededCooldown) {
       this.lastAlertTimestamp = timestamp;
-      await this.dispatchLateNightAlert(timestamp);
+      await this.dispatchLateNightAlert(timestamp, imageUrl);
       return true;
     }
 
@@ -236,7 +263,7 @@ export class DoorService {
   /**
    * Inspects the image, persists the detection result, and evaluates late-night alert gating.
    */
-  async recordDoorState(imagePath: string): Promise<DoorDetectionResult | undefined> {
+  async recordDoorState(imagePath: string, imageUrl?: string): Promise<DoorDetectionResult | undefined> {
     try {
       const detectionResult = await this.inspectImage(imagePath);
       console.log('[Door Detection] Result:', detectionResult);
@@ -248,10 +275,11 @@ export class DoorService {
         saturationPercentage: detectionResult.saturationPercentage,
         meanLuminance: detectionResult.meanLuminance,
         standardDeviation: detectionResult.standardDeviation,
-        timestamp
+        timestamp,
+        ...(imageUrl ? { imageUrl } : {})
       });
 
-      await this.evaluateAlert(detectionResult, timestamp);
+      await this.evaluateAlert(detectionResult, timestamp, imageUrl);
 
       return detectionResult;
     } catch (detectionError) {
