@@ -15,35 +15,9 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 @pragma('vm:entry-point')
-Future<void> notificationTapBackground(
-    NotificationResponse notificationResponse) async {
-  if (notificationResponse.actionId == 'action_close_door') {
-    await triggerDoorActivation();
-  }
-}
-
-@pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await displayNotificationAlert(message);
-}
-
-Future<void> triggerDoorActivation() async {
-  try {
-    await FirebaseDatabase.instance
-        .ref()
-        .child('/Activate')
-        .set('${DateTime.now().millisecondsSinceEpoch}');
-    print('Door activation triggered via Firebase');
-  } catch (firebaseError) {
-    print('Failed to write activate to Firebase: $firebaseError');
-    try {
-      await http.post(Uri.http(_GarageInterfaceState.ip, '/garage/activate'));
-      print('Door activation triggered via HTTP fallback');
-    } catch (httpError) {
-      print('Failed fallback HTTP trigger: $httpError');
-    }
-  }
 }
 
 Future<void> displayNotificationAlert(RemoteMessage message) async {
@@ -99,18 +73,6 @@ Future<void> displayNotificationAlert(RemoteMessage message) async {
     importance: Importance.max,
     priority: Priority.high,
     styleInformation: bigPictureStyleInformation,
-    actions: const <AndroidNotificationAction>[
-      AndroidNotificationAction(
-        'action_close_door',
-        'Close Door',
-        showsUserInterface: true,
-      ),
-      AndroidNotificationAction(
-        'action_dismiss',
-        'Dismiss',
-        cancelNotification: true,
-      ),
-    ],
   );
 
   final NotificationDetails notificationDetails =
@@ -220,13 +182,6 @@ class _GarageInterfaceState extends State<GarageInterface>
 
       await localNotificationsPlugin.initialize(
         settings: initializationSettings,
-        onDidReceiveNotificationResponse:
-            (NotificationResponse notificationResponse) {
-          if (notificationResponse.actionId == 'action_close_door') {
-            trigger();
-          }
-        },
-        onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
       );
 
       final messaging = FirebaseMessaging.instance;
@@ -249,82 +204,10 @@ class _GarageInterfaceState extends State<GarageInterface>
           FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
         print('Foreground message received: ${message.notification?.title} - ${message.notification?.body}');
         await displayNotificationAlert(message);
-        if (mounted) {
-          _showInAppDoorAlertDialog(message);
-        }
       });
-
-      FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-        if (mounted) {
-          _showInAppDoorAlertDialog(message);
-        }
-      });
-
-      final RemoteMessage? initialMessage =
-          await messaging.getInitialMessage();
-      if (initialMessage != null && mounted) {
-        _showInAppDoorAlertDialog(initialMessage);
-      }
     } catch (error) {
       print('Firebase Messaging initialization error: $error');
     }
-  }
-
-  void _showInAppDoorAlertDialog(RemoteMessage message) {
-    final String title =
-        message.notification?.title ?? message.data['title'] ?? 'Garage Door Alert';
-    final String body = message.notification?.body ??
-        message.data['body'] ??
-        'The garage door is still open after 9:00 PM EDT.';
-    final String? snapshotImageUrl =
-        message.notification?.android?.imageUrl ??
-        message.notification?.apple?.imageUrl ??
-        message.data['imageUrl'];
-
-    showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: Text(title),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(body),
-                if (snapshotImageUrl != null && snapshotImageUrl.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.network(
-                      snapshotImageUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) =>
-                          const SizedBox.shrink(),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-              },
-              child: const Text('Dismiss'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                Navigator.of(dialogContext).pop();
-                await trigger();
-              },
-              child: const Text('Close Door'),
-            ),
-          ],
-        );
-      },
-    );
   }
 
   @override

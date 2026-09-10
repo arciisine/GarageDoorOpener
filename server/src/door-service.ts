@@ -190,11 +190,6 @@ export class DoorService {
           }
         },
         apns: {
-          payload: {
-            aps: {
-              category: 'GARAGE_DOOR_ALERT'
-            }
-          },
           fcmOptions: {
             ...(imageUrl ? { imageUrl } : {})
           }
