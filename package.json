@@ -18,17 +18,24 @@
   "author": "",
   "main": "index.js",
   "devDependencies": {
-    "@travetto/compiler": "^8.0.1",
-    "@travetto/lint": "^8.0.1",
+    "@travetto/compiler": "^8.0.2",
+    "@travetto/lint": "^8.0.2",
     "@travetto/pack": "^8.0.1",
     "@travetto/repo": "^8.0.1",
-    "@travetto/test": "^8.0.1"
+    "@travetto/test": "^8.0.2"
   },
   "dependencies": {
-    "@travetto/cli": "^8.0.1"
+    "@travetto/cli": "^8.0.2"
   },
   "scripts": {
     "test": "trv test",
     "build": "trvc build"
+  },
+  "allowScripts": {
+    "@parcel/watcher": true,
+    "fsevents": true,
+    "@firebase/util": true,
+    "protobufjs": true,
+    "epoll": true
   }
 }
