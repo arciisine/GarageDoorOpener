@@ -84,7 +84,9 @@ class _GarageInterfaceState extends State<GarageInterface>
       await FirebaseDatabase.instance.goOnline();
     });
 
-    DatabaseReference databaseReference = FirebaseDatabase.instance.ref().child('/Image');
+    DatabaseReference databaseReference = FirebaseDatabase.instance.ref().child(
+      '/Image',
+    );
     this.stream = databaseReference.onValue
         .throttleTime(Duration(milliseconds: 500), trailing: true)
         .asyncMap((DatabaseEvent event) async {
@@ -114,9 +116,12 @@ class _GarageInterfaceState extends State<GarageInterface>
         print('Subscribed to garage_door_alerts topic');
       }
 
-      this.messageSubscription =
-          FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-        print('Foreground message received: ${message.notification?.title} - ${message.notification?.body}');
+      this.messageSubscription = FirebaseMessaging.onMessage.listen((
+        RemoteMessage message,
+      ) {
+        print(
+          'Foreground message received: ${message.notification?.title} - ${message.notification?.body}',
+        );
       });
     } catch (error) {
       print('Firebase Messaging initialization error: $error');
@@ -158,7 +163,7 @@ class _GarageInterfaceState extends State<GarageInterface>
 
   sendMessage(String key, String value) async {
     await this.auth();
-    FirebaseDatabase.instance.ref().child('/${key}').set(value);
+    FirebaseDatabase.instance.ref().child('/Request/${key}').set(value);
   }
 
   Future<void> trigger() async {

@@ -28,7 +28,7 @@ export class FirebaseListener {
   @PostConstruct()
   async postConstruct() {
     console.log('[Firebase] Listening');
-    const ref = firebaseDb.ref(this.db);
+    const ref = firebaseDb.ref(this.db, '/Request');
     const query = firebaseDb.query(ref, firebaseDb.orderByKey());
     firebaseDb.onChildAdded(query, item => this.onUpdate(item));
     firebaseDb.onChildChanged(query, item => this.onUpdate(item));
