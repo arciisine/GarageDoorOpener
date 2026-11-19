@@ -14,6 +14,7 @@
     "@travetto/cache": "^8.0.3",
     "@travetto/cli": "^8.0.2",
     "@travetto/di": "^8.0.1",
+    "@travetto/log": "^8.0.1",
     "@travetto/image": "^8.0.1",
     "@travetto/model-memory": "^8.0.3",
     "@travetto/model-s3": "^8.0.4",
