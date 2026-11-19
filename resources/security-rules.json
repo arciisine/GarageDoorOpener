@@ -3,24 +3,24 @@
     ".read": false,
     ".write": false,
     "Image": {
-      ".read": "auth != null && (root.child('Whitelist').hasChild(auth.token.email.replace('.', '_')) || root.child('Whitelist').hasChild(auth.uid.replace('.', '_')))",
-      ".write": true
+      ".read": "auth.token.email != null && auth.token.email != '' && root.child('Whitelist').child(auth.token.email.replace('.', '_')).exists()",
+      ".write": "auth != null"
     },
     "Request": {
-      ".write": "auth != null && (root.child('Whitelist').hasChild(auth.token.email.replace('.', '_')) || root.child('Whitelist').hasChild(auth.uid.replace('.', '_')))",
-      ".read": true
+      ".write": "auth.token.email != null && auth.token.email != '' && root.child('Whitelist').child(auth.token.email.replace('.', '_')).exists()",
+      ".read": "auth != null"
     },
     "DoorState": {
-      ".read": "auth != null && (root.child('Whitelist').hasChild(auth.token.email.replace('.', '_')) || root.child('Whitelist').hasChild(auth.uid.replace('.', '_')))",
-      ".write": true
+      ".read": "auth.token.email != null && auth.token.email != '' && root.child('Whitelist').child(auth.token.email.replace('.', '_')).exists()",
+      ".write": "auth != null"
     },
     "DoorAlert": {
-      ".read": "auth != null && (root.child('Whitelist').hasChild(auth.token.email.replace('.', '_')) || root.child('Whitelist').hasChild(auth.uid.replace('.', '_')))",
-      ".write": true
+      ".read": "auth.token.email != null && auth.token.email != '' && root.child('Whitelist').child(auth.token.email.replace('.', '_')).exists()",
+      ".write": "auth != null"
     },
     "Whitelist": {
       ".write": false,
-      ".read": true
+      ".read": "auth != null"
     }
   }
 }
