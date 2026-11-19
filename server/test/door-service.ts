@@ -1,5 +1,7 @@
 import assert from 'node:assert';
 
+import sharp from 'sharp';
+
 import { Suite, Test, TestFixtures } from '@travetto/test';
 
 import { DoorService } from '../src/door-service';
@@ -45,6 +47,28 @@ export class DoorServiceTest {
   }
 
   @Test()
+  async verifyClosedDoorInDarkDetection(): Promise<void> {
+    const service = new DoorService();
+    const darkImageBuffer = await sharp({
+      create: {
+        width: 1280,
+        height: 720,
+        channels: 3,
+        background: { r: 2, g: 2, b: 2 }
+      }
+    })
+      .png()
+      .toBuffer();
+
+    const detectionResult = await service.inspectImage(darkImageBuffer);
+
+    assert.strictEqual(detectionResult.isClosed, true);
+    assert.strictEqual(detectionResult.reason, 'Dark closed garage detected (near-black, low noise)');
+    assert.ok(detectionResult.meanLuminance < 5, 'Mean luminance should be near black');
+    assert.strictEqual(detectionResult.standardDeviation, 0, 'Standard deviation should be 0 for uniform dark image');
+  }
+
+  @Test()
   async verifyLateNightAlertGating(): Promise<void> {
     const service = new DoorService();
 
@@ -72,6 +96,22 @@ export class DoorServiceTest {
     const triggeredAtEight = await service.evaluateAlert(openResult, eightPostMeridiemTimestamp);
     assert.strictEqual(triggeredAtEight, false, 'Should not alert before 9:00 PM');
 
+    // 12:05 AM EDT (00:05) -> Should not alert after midnight
+    const twelveZeroFiveAnteMeridiemDate = new Date();
+    twelveZeroFiveAnteMeridiemDate.setHours(0, 5, 0, 0);
+    const twelveZeroFiveAnteMeridiemTimestamp = twelveZeroFiveAnteMeridiemDate.getTime();
+
+    const triggeredAtMidnight = await service.evaluateAlert(openResult, twelveZeroFiveAnteMeridiemTimestamp);
+    assert.strictEqual(triggeredAtMidnight, false, 'Should not alert at or after 12:00 AM');
+
+    // 2:00 AM EDT (02:00) -> Should not alert in early morning
+    const twoAnteMeridiemDate = new Date();
+    twoAnteMeridiemDate.setHours(2, 0, 0, 0);
+    const twoAnteMeridiemTimestamp = twoAnteMeridiemDate.getTime();
+
+    const triggeredAtTwo = await service.evaluateAlert(openResult, twoAnteMeridiemTimestamp);
+    assert.strictEqual(triggeredAtTwo, false, 'Should not alert after 12:00 AM');
+
     // 9:05 PM EDT (21:05) -> First open alert after 9:00 PM
     const nineZeroFiveDate = new Date();
     nineZeroFiveDate.setHours(21, 5, 0, 0);
@@ -80,38 +120,38 @@ export class DoorServiceTest {
     const triggeredAtNineZeroFive = await service.evaluateAlert(openResult, nineZeroFiveTimestamp);
     assert.strictEqual(triggeredAtNineZeroFive, true, 'Should trigger alert at 9:05 PM');
 
-    // 9:15 PM EDT (21:15) -> 10 minutes later, throttled by 30-minute cooldown
-    const nineFifteenDate = new Date();
-    nineFifteenDate.setHours(21, 15, 0, 0);
-    const nineFifteenTimestamp = nineFifteenDate.getTime();
-
-    const triggeredAtNineFifteen = await service.evaluateAlert(openResult, nineFifteenTimestamp);
-    assert.strictEqual(triggeredAtNineFifteen, false, 'Should be throttled by 30-minute cooldown');
-
-    // 9:36 PM EDT (21:36) -> 31 minutes later, should alert again
+    // 9:36 PM EDT (21:36) -> 31 minutes later, throttled by 1-hour cooldown
     const nineThirtySixDate = new Date();
     nineThirtySixDate.setHours(21, 36, 0, 0);
     const nineThirtySixTimestamp = nineThirtySixDate.getTime();
 
     const triggeredAtNineThirtySix = await service.evaluateAlert(openResult, nineThirtySixTimestamp);
-    assert.strictEqual(triggeredAtNineThirtySix, true, 'Should trigger alert after 30-minute cooldown');
+    assert.strictEqual(triggeredAtNineThirtySix, false, 'Should be throttled by 1-hour cooldown');
 
-    // 9:40 PM EDT (21:40) -> Closed door resets alert tracking
-    const nineFortyDate = new Date();
-    nineFortyDate.setHours(21, 40, 0, 0);
-    const nineFortyTimestamp = nineFortyDate.getTime();
+    // 10:06 PM EDT (22:06) -> 61 minutes later, should alert again
+    const tenZeroSixDate = new Date();
+    tenZeroSixDate.setHours(22, 6, 0, 0);
+    const tenZeroSixTimestamp = tenZeroSixDate.getTime();
 
-    const triggeredAtClosed = await service.evaluateAlert(closedResult, nineFortyTimestamp);
+    const triggeredAtTenZeroSix = await service.evaluateAlert(openResult, tenZeroSixTimestamp);
+    assert.strictEqual(triggeredAtTenZeroSix, true, 'Should trigger alert after 1-hour cooldown');
+
+    // 10:10 PM EDT (22:10) -> Closed door resets alert tracking
+    const tenTenDate = new Date();
+    tenTenDate.setHours(22, 10, 0, 0);
+    const tenTenTimestamp = tenTenDate.getTime();
+
+    const triggeredAtClosed = await service.evaluateAlert(closedResult, tenTenTimestamp);
     assert.strictEqual(triggeredAtClosed, false, 'Should not alert when door is closed');
     assert.strictEqual(service.lastAlertTimestamp, 0, 'Last alert timestamp should reset on door close');
 
-    // 9:45 PM EDT (21:45) -> Re-opened door alerts immediately
-    const nineFortyFiveDate = new Date();
-    nineFortyFiveDate.setHours(21, 45, 0, 0);
-    const nineFortyFiveTimestamp = nineFortyFiveDate.getTime();
+    // 10:15 PM EDT (22:15) -> Re-opened door alerts immediately
+    const tenFifteenDate = new Date();
+    tenFifteenDate.setHours(22, 15, 0, 0);
+    const tenFifteenTimestamp = tenFifteenDate.getTime();
 
-    const triggeredAtNineFortyFive = await service.evaluateAlert(openResult, nineFortyFiveTimestamp);
-    assert.strictEqual(triggeredAtNineFortyFive, true, 'Should alert immediately if re-opened');
+    const triggeredAtTenFifteen = await service.evaluateAlert(openResult, tenFifteenTimestamp);
+    assert.strictEqual(triggeredAtTenFifteen, true, 'Should alert immediately if re-opened');
   }
 
   @Test()

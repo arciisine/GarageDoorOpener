@@ -4,7 +4,7 @@ import * as firebaseDb from 'firebase/database';
 import sharp from 'sharp';
 
 import { Inject, Injectable, PostConstruct } from '@travetto/di';
-import { JSONUtil, RuntimeResources } from '@travetto/runtime';
+import { JSONUtil, RuntimeResources, TimeUtil } from '@travetto/runtime';
 
 export interface RegionOfInterest {
   left: number;
@@ -23,7 +23,8 @@ export interface DoorDetectionResult {
 
 @Injectable()
 export class DoorService {
-  static readonly THIRTY_MINUTES_IN_MILLISECONDS = 30 * 60 * 1000;
+  static readonly DARK_CLOSED_LUMINANCE_THRESHOLD = 5;
+  static readonly DARK_CLOSED_STANDARD_DEVIATION_THRESHOLD = 5;
 
   @Inject()
   database: firebaseDb.Database;
@@ -97,7 +98,21 @@ export class DoorService {
 
     const averageStandardDeviation = (redChannel.stdev + greenChannel.stdev + blueChannel.stdev) / 3;
 
-    // 1. Nighttime Open: IR light dissipates outdoors without reflecting back
+    // 1. Dark Closed Garage: near-perfect black with minimal noise indicates the light is off and door is shut
+    if (
+      meanLuminance <= DoorService.DARK_CLOSED_LUMINANCE_THRESHOLD &&
+      averageStandardDeviation <= DoorService.DARK_CLOSED_STANDARD_DEVIATION_THRESHOLD
+    ) {
+      return {
+        isClosed: true,
+        reason: 'Dark closed garage detected (near-black, low noise)',
+        saturationPercentage,
+        meanLuminance,
+        standardDeviation: averageStandardDeviation
+      };
+    }
+
+    // 2. Nighttime Open: IR light dissipates outdoors without reflecting back
     if (meanLuminance < 35) {
       return {
         isClosed: false,
@@ -203,7 +218,7 @@ export class DoorService {
 
   /**
    * Evaluates whether a late-night alert should be triggered.
-   * Alerts if the door is open after 9:00 PM EDT, throttled to once every 30 minutes.
+   * Alerts if the door is open between 9:00 PM and 12:00 AM, throttled to once per hour.
    */
   async evaluateAlert(detectionResult: DoorDetectionResult, timestamp: number = Date.now(), imageUrl?: string): Promise<boolean> {
     if (detectionResult.isClosed) {
@@ -219,14 +234,13 @@ export class DoorService {
     }
 
     const currentHour = new Date(timestamp).getHours();
-    const isAfterNinePostMeridiem = currentHour >= 21 || currentHour < 6;
+    const isWithinAlertWindow = currentHour >= 21;
 
-    if (!isAfterNinePostMeridiem) {
+    if (!isWithinAlertWindow) {
       return false;
     }
 
-    const hasExceededCooldown =
-      this.lastAlertTimestamp === 0 || timestamp - this.lastAlertTimestamp >= DoorService.THIRTY_MINUTES_IN_MILLISECONDS;
+    const hasExceededCooldown = this.lastAlertTimestamp === 0 || timestamp - this.lastAlertTimestamp >= TimeUtil.duration('1h', 'ms');
 
     if (hasExceededCooldown) {
       this.lastAlertTimestamp = timestamp;
@@ -253,6 +267,7 @@ export class DoorService {
         meanLuminance: detectionResult.meanLuminance,
         standardDeviation: detectionResult.standardDeviation,
         timestamp,
+        imagePath,
         ...(imageUrl ? { imageUrl } : {})
       });
 
