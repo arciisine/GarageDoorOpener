@@ -1,6 +1,7 @@
 import { createReadStream } from 'node:fs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { setTimeout } from 'node:timers/promises';
 
 import * as firebaseDb from 'firebase/database';
 import onoff from 'onoff';
@@ -49,21 +50,28 @@ export class Garage {
 
   @Post('/snapshot')
   async snapshot(@QueryParam('img') imagePath: string) {
+    console.log('[Snapshot] Requested', imagePath);
     if (this.lock && Date.now() - this.lock < 10000) {
       // Only let lock last 10 seconds
       console.log('[Snapshot] Skipped');
     } else {
       try {
-        this.lock = Date.now();
         console.log('[Snapshot] Starting', { imagePath });
 
-        const pathName = `/images/${path.basename(imagePath)}`;
-        await this.s3.upsertBlob(pathName, createReadStream(imagePath));
-        this.lastUrl = await this.s3.getBlobReadUrl(pathName, '1h');
-        const imageReference = firebaseDb.ref(this.db, '/Image');
-        await firebaseDb.set(imageReference, this.lastUrl);
-
-        await this.doorService.recordDoorState(imagePath, this.lastUrl);
+        await Promise.race([
+          (async () => {
+            this.lock = Date.now();
+            const pathName = `/images/${path.basename(imagePath)}`;
+            await this.s3.upsertBlob(pathName, createReadStream(imagePath));
+            this.lastUrl = await this.s3.getBlobReadUrl(pathName, '1h');
+            const imageReference = firebaseDb.ref(this.db, '/Image');
+            await firebaseDb.set(imageReference, this.lastUrl);
+            await this.doorService.recordDoorState(imagePath, this.lastUrl);
+          })(),
+          setTimeout(10_000).then(() => {
+            throw new Error('Timed out');
+          })
+        ]);
       } catch (error) {
         console.log('[Snapshot] Failed', error);
       } finally {

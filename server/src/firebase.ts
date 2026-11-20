@@ -36,6 +36,8 @@ export class FirebaseListener {
 
   @Cache('store', 200, { key: (item: firebaseDb.DataSnapshot) => item.key ?? 'unknown' })
   async onUpdate(item: firebaseDb.DataSnapshot): Promise<number> {
+    logItem(item);
+
     const now = Date.now();
     // Do not process anything in the first N seconds
     if (now < STARTUP_DELAY) {
@@ -44,14 +46,12 @@ export class FirebaseListener {
 
     switch (item.key) {
       case 'Activate': {
-        logItem(item);
         if (item.exists()) {
           await this.garage.triggerDoor(item.val().value);
         }
         break;
       }
       case 'Restart': {
-        logItem(item);
         if (item.exists() && item.val().value) {
           this.garage.restart();
         }
